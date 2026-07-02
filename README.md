@@ -231,5 +231,5 @@ Ce projet prolonge directement mon travail postdoctoral sur **AI4MultiGIS** (pla
 
 ## 👩‍💻 Auteur
 
-**Fatima Chahal** — AI Engineer | PhD in Distributed Systems  
+**Fatima Chahal** - AI Engineer | PhD in Distributed Systems  
 🔗 [GitHub](https://github.com/FatimaChahal) · [Google Scholar](https://scholar.google.com/citations?user=I106NZcAAAAJ&hl=fr)
