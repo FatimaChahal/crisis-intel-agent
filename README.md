@@ -105,25 +105,25 @@ Tracking des expériences RAG avec **MLflow** (paramètres, métriques, versions
 ## 🛠️ Stack technique
 
 ### LLM & Agents
-- `langchain` — orchestration et chaînes LLM
-- `langgraph` — orchestration multi-agents avec état
-- `langfuse` — observabilité et tracing des LLM
+- `langchain`: orchestration et chaînes LLM
+- `langgraph`: orchestration multi-agents avec état
+- `langfuse`: observabilité et tracing des LLM
 - LLMs : Gemini 2.5 Flash / Claude / Ollama (local)
 
 ### RAG & Embeddings
-- `chromadb` — vector store
-- `ragas` — évaluation RAG
+- `chromadb`: vector store
+- `ragas`: évaluation RAG
 - Chunking stratégique + scoring de similarité
 
 ### MLOps
-- `mlflow` — tracking des expériences, modèles, métriques
-- `prometheus` — monitoring applicatif
-- `docker` — conteneurisation
-- `kubernetes` (EKS) — orchestration
+- `mlflow`: tracking des expériences, modèles, métriques
+- `prometheus`: monitoring applicatif
+- `docker`: conteneurisation
+- `kubernetes` (EKS): orchestration
 
 ### API
-- `fastapi` — API REST asynchrone
-- `pydantic` — validation des données (PEP 484 — type hints)
+- `fastapi`: API REST asynchrone
+- `pydantic`: validation des données (PEP 484 — type hints)
 - Endpoints RESTful documentés (OpenAPI/Swagger)
 
 ### Cloud AWS
@@ -139,9 +139,9 @@ Tracking des expériences RAG avec **MLflow** (paramètres, métriques, versions
 - **GitHub Actions** → build Docker → push ECR → deploy ECS/EKS
 
 ### Qualité du code Python
-- PEP 8 — style et formatage (`black`, `flake8`)
-- PEP 257 — docstrings (`pydocstyle`)
-- PEP 484 — type hints (`mypy`)
+- PEP 8: style et formatage (`black`, `flake8`)
+- PEP 257: docstrings (`pydocstyle`)
+- PEP 484: type hints (`mypy`)
 
 ---
 
