@@ -1,3 +1,6 @@
+from data.silver.models import Alert
+
+
 def clean_text(text: str) -> str:
     """
     Clean a text by removing leading/trailing spaces and converting to lowercase.
@@ -10,37 +13,30 @@ def clean_text(text: str) -> str:
     """
     text = text.strip()
     text = text.lower()
-
     return text
 
 
-# if __name__ == "__main__":
-#     print(clean_text("  FLOOD IN GERMANY  "))
-#     print(clean_text("  ALERT: Heavy Rain  "))
-
-
-def clean_alert(alert: dict) -> dict:
+def clean_alert(alert: dict) -> Alert:
     """
-    Clean an alert dictionary by removing spaces and converting to lowercase.
+    Clean an alert dictionary and return a validated Alert model.
 
     Args:
         alert: The raw alert dictionary to clean.
 
     Returns:
-        The cleaned alert dictionary.
+        A validated Alert instance with cleaned fields.
     """
-    cleaned_alert = {}
-    cleaned_alert["titre"] = clean_text(alert.get("titre", ""))
-    cleaned_alert["pays"] = clean_text(alert.get("pays", ""))
-    cleaned_alert["severite"] = clean_text(alert.get("severite", ""))
-
-    return cleaned_alert
+    return Alert(
+        titre=clean_text(alert.get("titre", "")),
+        pays=clean_text(alert.get("pays", "")),
+        severite=clean_text(alert.get("severite", "")),
+    )
 
 
 if __name__ == "__main__":
-    alerte = {
+    alerte_brute = {
         "titre": "  FLOOD IN GERMANY  ",
         "pays": "  germany  ",
         "severite": "  ORANGE  ",
     }
-    print(clean_alert(alerte))
+    print(clean_alert(alerte_brute))
