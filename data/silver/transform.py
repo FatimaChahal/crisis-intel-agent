@@ -1,4 +1,6 @@
 import pandas as pd
+import json
+from data.silver.clean import clean_alert
 
 
 def load_bronze(path: str = "data/bronze/alerts.csv") -> pd.DataFrame:
@@ -13,6 +15,19 @@ def load_bronze(path: str = "data/bronze/alerts.csv") -> pd.DataFrame:
     """
     return pd.read_csv(path)
 
+def load_bronze_json(path: str = "data/bronze/alerts.json") -> list:
+    """
+    Load raw alerts data from Bronze layer (JSON format).
+
+    Args:
+        path: Path to the JSON file.
+
+    Returns:
+        A list of raw alert dictionaries.
+    """
+    with open(path, "r") as f:
+        data = json.load(f)
+    return data
 
 def clean_bronze(df: pd.DataFrame) -> pd.DataFrame:
     """
@@ -29,11 +44,20 @@ def clean_bronze(df: pd.DataFrame) -> pd.DataFrame:
         df[col] = df[col].str.lower()
     return df
 
+def clean_bronze_json(alerts: list) -> list:
+    """
+    Clean a list of raw alert dictionaries and validate with Pydantic.
 
-# if __name__ == "__main__":
-#     df = load_bronze()
-#     df_clean = clean_bronze(df)
-#     print(df_clean)
+    Args:
+        alerts: List of raw alert dictionaries from Bronze layer.
+
+    Returns:
+        List of validated Alert objects.
+    """
+    cleaned = []
+    for alert in alerts:
+        cleaned.append(clean_alert(alert))
+    return cleaned
 
 def save_silver(df: pd.DataFrame, path: str = "data/silver/alerts_clean.csv") -> None:
     """
@@ -48,9 +72,16 @@ def save_silver(df: pd.DataFrame, path: str = "data/silver/alerts_clean.csv") ->
     """
     df.to_csv(path, index=False)
     print(f"✅ Saved to {path}")
+    
 
 if __name__ == "__main__":
+    # CSV pipeline
     df = load_bronze()
     df_clean = clean_bronze(df)
-    print(df_clean)
     save_silver(df_clean)
+
+    # JSON pipeline
+    alerts = load_bronze_json()
+    alerts_clean = clean_bronze_json(alerts)
+    for alert in alerts_clean:
+        print(alert)
