@@ -2,6 +2,8 @@ from dotenv import load_dotenv
 from langchain_groq import ChatGroq
 from langgraph.graph import END, START, StateGraph
 from typing_extensions import TypedDict
+from langfuse.langchain import CallbackHandler
+
 
 from evaluation.vector_store import build_vector_store, search_similar
 
@@ -9,6 +11,9 @@ load_dotenv()
 
 # Build vector store once
 collection = build_vector_store()
+
+# Langfuse callback
+langfuse_handler = CallbackHandler()
 
 
 class AgentState(TypedDict):
@@ -74,7 +79,7 @@ def analyse_alerte(state: AgentState) -> AgentState:
 
     Answer in 3 bullet points.
     """
-    response = llm.invoke(prompt)
+    response = llm.invoke(prompt, config={"callbacks": [langfuse_handler]})
     return {**state, "analyse": response.content}
 
 
@@ -103,3 +108,4 @@ if __name__ == "__main__":
     })
     print("\n🔍 Analysis:")
     print(result["analyse"])
+    print("\n✅ Trace sent to Langfuse!")
