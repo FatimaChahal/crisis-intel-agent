@@ -3,6 +3,8 @@ from langchain_groq import ChatGroq
 from langgraph.graph import END, START, StateGraph
 from typing_extensions import TypedDict
 from langfuse.langchain import CallbackHandler
+import time
+from mlflow_tracking.tracker import track_rag_run
 
 
 from evaluation.vector_store import build_vector_store, search_similar
@@ -101,11 +103,24 @@ def build_agent():
 
 if __name__ == "__main__":
     agent = build_agent()
+
+    start = time.time()
     result = agent.invoke({
         "alerte": "flood in germany severity orange",
         "contexte": "",
         "analyse": "",
     })
+    latency = (time.time() - start) * 1000
+
     print("\n🔍 Analysis:")
     print(result["analyse"])
-    print("\n✅ Trace sent to Langfuse!")
+
+    # Track avec MLflow
+    track_rag_run(
+        query="flood in germany severity orange",
+        n_results=2,
+        model_name="llama-3.3-70b-versatile",
+        latency_ms=latency,
+        n_docs_retrieved=2,
+        response_length=len(result["analyse"]),
+    )
