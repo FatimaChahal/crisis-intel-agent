@@ -50,8 +50,16 @@ if __name__ == "__main__":
 
     # Simuler un upload vers Bronze
     alerts = [
-        {"titre": "  FLOOD IN GERMANY  ", "pays": "  germany  ", "severite": "  ORANGE  "},
-        {"titre": "  EARTHQUAKE IN TURKEY  ", "pays": "  turkey  ", "severite": "  RED  "},
+        {
+            "titre": "  FLOOD IN GERMANY  ",
+            "pays": "  germany  ",
+            "severite": "  ORANGE  ",
+        },
+        {
+            "titre": "  EARTHQUAKE IN TURKEY  ",
+            "pays": "  turkey  ",
+            "severite": "  RED  ",
+        },
     ]
     client.upload("bronze/alerts_s3.json", alerts)
 

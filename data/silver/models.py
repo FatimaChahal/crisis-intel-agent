@@ -9,7 +9,6 @@ class Alert(BaseModel):
     severite: str
 
 
-
 # if __name__ == "__main__":
 #     alerte = Alert(
 #         titre=123,
@@ -17,4 +16,3 @@ class Alert(BaseModel):
 #         severite="orange"
 #     )
 #     print(alerte)
-

@@ -33,10 +33,7 @@ def verify_api_key(api_key: str = Security(api_key_header)) -> str:
         HTTPException: If the API key is invalid.
     """
     if api_key != API_KEY:
-        raise HTTPException(
-            status_code=401,
-            detail="Invalid API Key"
-        )
+        raise HTTPException(status_code=401, detail="Invalid API Key")
     return api_key
 
 
@@ -52,10 +49,7 @@ def health() -> dict:
 
 
 @app.post("/ingest")
-def ingest(
-    alert: dict,
-    api_key: str = Security(verify_api_key)
-) -> Alert:
+def ingest(alert: dict, api_key: str = Security(verify_api_key)) -> Alert:
     """
     Receive a raw alert, clean and validate it.
 

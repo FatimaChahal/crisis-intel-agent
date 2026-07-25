@@ -105,11 +105,13 @@ if __name__ == "__main__":
     agent = build_agent()
 
     start = time.time()
-    result = agent.invoke({
-        "alerte": "flood in germany severity orange",
-        "contexte": "",
-        "analyse": "",
-    })
+    result = agent.invoke(
+        {
+            "alerte": "flood in germany severity orange",
+            "contexte": "",
+            "analyse": "",
+        }
+    )
     latency = (time.time() - start) * 1000
 
     print("\n🔍 Analysis:")
