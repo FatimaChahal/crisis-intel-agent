@@ -1,7 +1,7 @@
 # 🚨 Crisis Intel Agent
 
 > **Plateforme agentique de veille et d'analyse de crises géospatiales**  
-> Multi-agent · Agentic RAG · MLOps · Cloud AWS · API REST · CI/CD
+> Multi-agent · Agentic RAG · MLOps · Cloud AWS · API REST · CI/CD · RAG Evaluation
 
 ---
 
@@ -29,7 +29,7 @@ Sources (News / GIS / Capteurs)
 ┌──────────────────────────────────────────┐
 │       Scout Agent (LangGraph)            │
 │                                          │
-│   Retrieve ──▶ Analyse ──▶ Rapport       │
+│   Retrieve ──▶ Analyze ──▶ Rapport       │
 │   ChromaDB     Groq/Llama   Structuré    │
 │   (RAG)        3.3 70B                   │
 └──────────────────────────────────────────┘
@@ -45,6 +45,7 @@ Sources (News / GIS / Capteurs)
 ┌──────────────────────────────────────────┐
 │     Observabilité & MLOps                │
 │  Langfuse (tracing LLM) · MLflow         │
+│  RAG Evaluation (LLM-as-judge)           │
 │  GitHub Actions CI/CD (black + pytest)   │
 └──────────────────────────────────────────┘
         │
@@ -95,12 +96,30 @@ Latence : ~1 450 ms | Tokens : 362 | Tracé dans Langfuse + MLflow
 | Node | Rôle | Technologie |
 |---|---|---|
 | **Retrieve** | Cherche les crises passées similaires | ChromaDB + `all-MiniLM-L6-v2` |
-| **Analyse** | Génère un rapport contextualisé | Groq / Llama 3.3 70B |
+| **Analyze** | Génère un rapport contextualisé | Groq / Llama 3.3 70B |
 | **Rapport** | Retourne 3 bullet points structurés | LangGraph State |
 
 **Pourquoi RAG ?**
 - Sans RAG → le LLM répond depuis son entraînement général → risque d'hallucination
 - Avec RAG → l'agent consulte d'abord les crises passées → réponse ancrée, traçable, vérifiable
+
+---
+
+## 📊 Évaluation RAG — LLM-as-Judge
+
+Approche d'évaluation custom avec **LLM-as-judge** (Groq/Llama 3.3) — deux métriques clés trackées dans MLflow :
+
+| Métrique | Description | Score obtenu |
+|---|---|---|
+| **Faithfulness** | La réponse est-elle fidèle aux documents récupérés ? | **0.90 / 1.0** ✅ |
+| **Relevancy** | La réponse répond-elle à la question posée ? | **1.00 / 1.0** ✅ |
+
+```bash
+# Lancer l'évaluation
+python -m evaluation.rag_eval
+```
+
+R�sultats trackés automatiquement dans MLflow pour comparaison entre runs.
 
 ---
 
@@ -128,6 +147,11 @@ Chaque source (news, GIS, alertes) = domaine **Data Mesh** indépendant avec son
 - `chromadb` — vector store local
 - `sentence-transformers` (`all-MiniLM-L6-v2`) — embeddings
 - Chunking stratégique + scoring de similarité
+
+### RAG Evaluation
+- LLM-as-judge (Groq/Llama 3.3) — évaluation automatique
+- Métriques : Faithfulness (0.90) + Relevancy (1.00)
+- Résultats trackés dans MLflow
 
 ### Data Pipeline
 - `pandas` — nettoyage et transformation (Bronze → Silver)
@@ -169,7 +193,7 @@ crisis-intel-agent/
 │
 ├── agents/
 │   ├── __init__.py
-│   └── scout_agent.py        # Agent LangGraph (Retrieve → Analyse → Rapport)
+│   └── scout_agent.py        # Agent LangGraph (Retrieve → Analyze → Rapport)
 ├── api/
 │   ├── __init__.py
 │   └── main.py               # FastAPI — /health + /ingest sécurisé
@@ -186,7 +210,8 @@ crisis-intel-agent/
 │       └── crisis_reports.py # Base de connaissances RAG
 ├── evaluation/
 │   ├── __init__.py
-│   └── vector_store.py       # ChromaDB — build + search
+│   ├── vector_store.py       # ChromaDB — build + search
+│   └── rag_eval.py           # RAG evaluation — LLM-as-judge
 ├── mlflow_tracking/
 │   ├── __init__.py
 │   └── tracker.py            # MLflow — log params + metrics
@@ -228,6 +253,12 @@ cp .env.example .env
 # Lancer l'API
 uvicorn api.main:app --reload
 # http://localhost:8000/docs
+
+# Lancer l'agent
+python -m agents.scout_agent
+
+# Lancer l'évaluation RAG
+python -m evaluation.rag_eval
 ```
 
 ## 🧪 Tests
@@ -235,12 +266,6 @@ uvicorn api.main:app --reload
 ```bash
 python -m pytest tests/ -v
 # 3 passed in 0.03s ✅
-```
-
-## 🤖 Lancer l'agent
-
-```bash
-python -m agents.scout_agent
 ```
 
 ---
