@@ -1,15 +1,15 @@
 # 🚨 Crisis Intel Agent
 
 > **Plateforme agentique de veille et d'analyse de crises géospatiales**  
-> Multi-agent · Agentic RAG · MLOps · Cloud AWS · API REST
+> Multi-agent · Agentic RAG · MLOps · Cloud AWS · API REST · CI/CD
 
 ---
 
 ## 🎯 Objectif
 
-Crisis Intel Agent est une plateforme IA bout-en-bout qui automatise la **veille, l'analyse et le résumé de situations de crise** (inondations, risques environnementaux, événements géospatiaux) à partir de sources de données hétérogènes (news, données GIS, capteurs).
+Crisis Intel Agent automatise la **veille, l'analyse et le résumé de situations de crise** (inondations, risques environnementaux, événements géospatiaux) à partir de sources de données hétérogènes (news, données GIS, capteurs).
 
-Le système est construit autour d'une architecture **multi-agents orchestrée avec LangGraph**, d'un pipeline **Agentic RAG évalué**, et d'un déploiement **MLOps-grade sur AWS**.
+Le système est construit autour d'une architecture **multi-agents orchestrée avec LangGraph**, d'un pipeline **Agentic RAG évalué**, et d'un déploiement **MLOps-grade sur AWS ECS Fargate**.
 
 ---
 
@@ -20,128 +20,145 @@ Sources (News / GIS / Capteurs)
         │
         ▼
 ┌──────────────────────────────────────────┐
-│           Data Pipeline (Medallion)       │
-│  Bronze → Silver → Gold                  │
-│  (raw)    (clean)   (enriched)           │
+│    Data Pipeline — Medallion (S3)        │
+│  Bronze (brut) → Silver (propre) → Gold  │
+│  Pandas · Pydantic · JSON · boto3        │
 └──────────────────────────────────────────┘
         │
         ▼
 ┌──────────────────────────────────────────┐
-│         Agent Orchestrator (LangGraph)   │
+│       Scout Agent (LangGraph)            │
 │                                          │
-│   ┌──────────┐   ┌──────────────────┐   │
-│   │  Scout   │──▶│    Analyst       │   │
-│   │  Agent   │   │    Agent         │   │
-│   └──────────┘   └──────────────────┘   │
-│         │               │               │
-│         ▼               ▼               │
-│   ┌──────────┐   ┌──────────────────┐   │
-│   │   RAG    │   │    Critic        │   │
-│   │  Agent   │   │    Agent         │   │
-│   └──────────┘   └──────────────────┘   │
+│   Retrieve ──▶ Analyse ──▶ Rapport       │
+│   ChromaDB     Groq/Llama   Structuré    │
+│   (RAG)        3.3 70B                   │
 └──────────────────────────────────────────┘
         │
         ▼
 ┌──────────────────────────────────────────┐
-│         FastAPI REST API                 │
-│  /analyze  /evaluate  /health            │
+│        FastAPI REST API                  │
+│   GET /health  POST /ingest              │
+│   Sécurisée par API Key (X-API-Key)      │
 └──────────────────────────────────────────┘
         │
         ▼
 ┌──────────────────────────────────────────┐
 │     Observabilité & MLOps                │
-│  Langfuse · MLflow · Prometheus          │
+│  Langfuse (tracing LLM) · MLflow         │
+│  GitHub Actions CI/CD (black + pytest)   │
 └──────────────────────────────────────────┘
         │
         ▼
 ┌──────────────────────────────────────────┐
-│     Cloud AWS (Docker + Kubernetes)      │
-│  ECS Fargate / EKS · ECR · S3           │
+│     Cloud AWS                            │
+│  Docker → ECR → ECS Fargate              │
+│  S3 · CloudWatch · Security Groups       │
 └──────────────────────────────────────────┘
 ```
 
 ---
 
-## 🤖 Agents
+## 🔄 Exemple concret — alerte inondation
 
-| Agent | Rôle | Technologie |
+**Entrée (Bronze — brute) :**
+```json
+{
+    "titre": "  FLOOD IN GERMANY  ",
+    "pays": "  germany  ",
+    "severite": "  ORANGE  "
+}
+```
+
+**Silver — nettoyée (Pandas + Pydantic) :**
+```json
+{
+    "titre": "flood in germany",
+    "pays": "germany",
+    "severite": "orange"
+}
+```
+
+**Gold — enrichie + analysée par l'agent :**
+```
+• Type : Flood crisis
+• Sévérité : Orange (moins grave que 2021, attention immédiate requise)
+• Actions recommandées : évacuation d'urgence, déploiement des équipes,
+  restauration des services essentiels — basé sur crises passées similaires
+
+Latence : ~1 450 ms | Tokens : 362 | Tracé dans Langfuse + MLflow
+```
+
+---
+
+## 🤖 Agent LangGraph
+
+| Node | Rôle | Technologie |
 |---|---|---|
-| **Scout Agent** | Collecte et récupère les documents pertinents (news, GIS, rapports) | LangChain + web search |
-| **RAG Agent** | Interroge la base vectorielle, génère une réponse contextualisée | LangGraph + ChromaDB |
-| **Analyst Agent** | Analyse et structure l'information en rapport de crise | LangGraph + LLM |
-| **Critic Agent** | Vérifie la fiabilité et la cohérence du rapport généré | LangGraph + scoring |
+| **Retrieve** | Cherche les crises passées similaires | ChromaDB + `all-MiniLM-L6-v2` |
+| **Analyse** | Génère un rapport contextualisé | Groq / Llama 3.3 70B |
+| **Rapport** | Retourne 3 bullet points structurés | LangGraph State |
 
-Communication inter-agents : pattern **A2A (Agent-to-Agent)** via protocole **MCP (Model Context Protocol)**.
-
----
-
-## 📊 Data Pipeline — Architecture Medallion
-
-```
-Bronze  →  données brutes ingérées (JSON, GeoJSON, CSV) — stockage S3
-Silver  →  données nettoyées, normalisées, déduplicées
-Gold    →  données enrichies, prêtes pour le RAG et l'analyse
-```
-
-Chaque domaine de données (news, GIS, capteurs) est traité comme un **Data Mesh** indépendant avec son propre pipeline et ses propres contrats de données.
+**Pourquoi RAG ?**
+- Sans RAG → le LLM répond depuis son entraînement général → risque d'hallucination
+- Avec RAG → l'agent consulte d'abord les crises passées → réponse ancrée, traçable, vérifiable
 
 ---
 
-## 📐 Evaluation RAG
+## 📊 Data Pipeline — Medallion + Data Mesh
 
-Métriques implémentées avec **RAGAS** :
+```
+Bronze  →  données brutes ingérées (JSON, CSV) — stockage S3
+Silver  →  données nettoyées (Pandas + Pydantic validation)
+Gold    →  données enrichies + embeddings — prêtes pour le RAG
+```
 
-| Métrique | Description |
-|---|---|
-| Faithfulness | La réponse est-elle fidèle aux sources récupérées ? |
-| Answer Relevancy | La réponse répond-elle à la question posée ? |
-| Context Precision | Les documents récupérés sont-ils pertinents ? |
-| Context Recall | Tous les documents utiles ont-ils été récupérés ? |
-
-Tracking des expériences RAG avec **MLflow** (paramètres, métriques, versions de modèles).
+Chaque source (news, GIS, alertes) = domaine **Data Mesh** indépendant avec son propre pipeline.
 
 ---
 
 ## 🛠️ Stack technique
 
 ### LLM & Agents
-- `langchain`: orchestration et chaînes LLM
-- `langgraph`: orchestration multi-agents avec état
-- `langfuse`: observabilité et tracing des LLM
-- LLMs : Gemini 2.5 Flash / Claude / Ollama (local)
+- `langchain` + `langchain-groq` — orchestration LLM
+- `langgraph` — orchestration multi-agents avec état
+- `langfuse` — observabilité et tracing (latence, tokens, prompts)
+- LLM : **Groq / Llama 3.3 70B**
 
 ### RAG & Embeddings
-- `chromadb`: vector store
-- `ragas`: évaluation RAG
+- `chromadb` — vector store local
+- `sentence-transformers` (`all-MiniLM-L6-v2`) — embeddings
 - Chunking stratégique + scoring de similarité
 
-### MLOps
-- `mlflow`: tracking des expériences, modèles, métriques
-- `prometheus`: monitoring applicatif
-- `docker`: conteneurisation
-- `kubernetes` (EKS): orchestration
+### Data Pipeline
+- `pandas` — nettoyage et transformation (Bronze → Silver)
+- `pydantic` — validation stricte des types (PEP 484)
+- `boto3` — interface S3 (Bronze/Silver/Gold)
+- `python-dotenv` — gestion des secrets
 
-### API
-- `fastapi`: API REST asynchrone
-- `pydantic`: validation des données (PEP 484 — type hints)
-- Endpoints RESTful documentés (OpenAPI/Swagger)
+### MLOps
+- `mlflow` — tracking expériences (paramètres, métriques, runs)
+- `docker` — conteneurisation
+- **GitHub Actions** — CI/CD (black + pytest à chaque push)
+
+### API & Sécurité
+- `fastapi` + `uvicorn` — API REST asynchrone
+- `APIKeyHeader` — authentification par clé (`X-API-Key`)
+- Sans clé → **401 Unauthorized** | Avec clé → **200 OK**
+- Documentation Swagger auto : `/docs`
 
 ### Cloud AWS
-| Service AWS | Usage |
+| Service | Usage |
 |---|---|
-| **ECS Fargate** | Exécution des conteneurs sans serveur |
-| **EKS** | Orchestration Kubernetes |
-| **ECR** | Registry des images Docker |
-| **S3** | Stockage des données (Bronze/Silver/Gold) |
-| **CloudWatch** | Monitoring et logs |
-
-### CI/CD
-- **GitHub Actions** → build Docker → push ECR → deploy ECS/EKS
+| **ECR** | Registre Docker |
+| **ECS Fargate** | Exécution sans serveur |
+| **S3** | Stockage Bronze/Silver/Gold |
+| **CloudWatch** | Logs et monitoring |
 
 ### Qualité du code Python
-- PEP 8: style et formatage (`black`, `flake8`)
-- PEP 257: docstrings (`pydocstyle`)
-- PEP 484: type hints (`mypy`)
+- **PEP 8** — formatage (`black`)
+- **PEP 257** — docstrings (Args/Returns)
+- **PEP 484** — type hints (`mypy`)
+- **pytest** — 3 tests passent en 0.03s ✅
 
 ---
 
@@ -150,21 +167,41 @@ Tracking des expériences RAG avec **MLflow** (paramètres, métriques, versions
 ```
 crisis-intel-agent/
 │
-├── agents/                  # Agents LangGraph (Scout, RAG, Analyst, Critic)
-├── api/                     # FastAPI — endpoints REST
+├── agents/
+│   ├── __init__.py
+│   └── scout_agent.py        # Agent LangGraph (Retrieve → Analyse → Rapport)
+├── api/
+│   ├── __init__.py
+│   └── main.py               # FastAPI — /health + /ingest sécurisé
 ├── data/
-│   ├── bronze/              # Données brutes ingérées (S3)
-│   ├── silver/              # Données nettoyées
-│   └── gold/                # Données enrichies pour RAG
-├── evaluation/              # Pipeline d'évaluation RAG (RAGAS)
+│   ├── bronze/
+│   │   ├── alerts.csv
+│   │   ├── alerts.json
+│   │   └── storage.py        # Client S3 local
+│   ├── silver/
+│   │   ├── clean.py          # clean_text + clean_alert
+│   │   ├── models.py         # Alert — modèle Pydantic
+│   │   └── transform.py      # Pipeline Bronze → Silver
+│   └── gold/
+│       └── crisis_reports.py # Base de connaissances RAG
+├── evaluation/
+│   ├── __init__.py
+│   └── vector_store.py       # ChromaDB — build + search
+├── mlflow_tracking/
+│   ├── __init__.py
+│   └── tracker.py            # MLflow — log params + metrics
 ├── infrastructure/
-│   ├── docker/              # Dockerfiles
-│   └── k8s/                 # Manifests Kubernetes (EKS)
-├── mlflow/                  # Tracking MLflow
-├── notebooks/               # Exploration et prototypage
-├── tests/                   # Tests unitaires et d'intégration
-├── docs/                    # Documentation architecture
-├── .env.example
+│   ├── docker/
+│   │   ├── Dockerfile
+│   │   └── task-definition.json
+│   └── k8s/
+├── tests/
+│   ├── __init__.py
+│   └── test_clean.py         # 3 tests pytest
+├── .github/
+│   └── workflows/
+│       └── ci.yml            # GitHub Actions CI
+├── .gitignore
 ├── docker-compose.yml
 ├── requirements.txt
 └── README.md
@@ -172,21 +209,38 @@ crisis-intel-agent/
 
 ---
 
-## 🚀 Lancement rapide
+## 🚀 Lancement rapide (local)
 
 ```bash
-# Cloner le repo
+# Cloner
 git clone https://github.com/FatimaChahal/crisis-intel-agent
 cd crisis-intel-agent
 
+# Environnement virtuel
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+
 # Variables d'environnement
 cp .env.example .env
+# Remplir : GROQ_API_KEY, LANGFUSE_PUBLIC_KEY, LANGFUSE_SECRET_KEY, API_KEY
 
-# Lancer avec Docker Compose (local)
-docker-compose up --build
+# Lancer l'API
+uvicorn api.main:app --reload
+# http://localhost:8000/docs
+```
 
-# API disponible sur http://localhost:8000
-# Docs Swagger : http://localhost:8000/docs
+## 🧪 Tests
+
+```bash
+python -m pytest tests/ -v
+# 3 passed in 0.03s ✅
+```
+
+## 🤖 Lancer l'agent
+
+```bash
+python -m agents.scout_agent
 ```
 
 ---
@@ -194,42 +248,42 @@ docker-compose up --build
 ## ☁️ Déploiement AWS
 
 ```bash
-# Build et push vers ECR
-docker build -t crisis-intel-agent .
-aws ecr get-login-password --region eu-west-1 | docker login --username AWS --password-stdin <account>.dkr.ecr.eu-west-1.amazonaws.com
-docker tag crisis-intel-agent:latest <account>.dkr.ecr.eu-west-1.amazonaws.com/crisis-intel-agent:latest
-docker push <account>.dkr.ecr.eu-west-1.amazonaws.com/crisis-intel-agent:latest
+# Login ECR
+aws ecr get-login-password --region eu-west-1 | \
+  docker login --username AWS --password-stdin \
+  637161850292.dkr.ecr.eu-west-1.amazonaws.com
 
-# Déploiement ECS Fargate via GitHub Actions (CI/CD automatisé)
+# Build + Push
+docker build -t crisis-intel-agent -f infrastructure/docker/Dockerfile .
+docker tag crisis-intel-agent:latest \
+  637161850292.dkr.ecr.eu-west-1.amazonaws.com/crisis-intel-agent:latest
+docker push \
+  637161850292.dkr.ecr.eu-west-1.amazonaws.com/crisis-intel-agent:latest
 ```
 
----
-
-## 🔗 Lien avec mes travaux de recherche
-
-Ce projet prolonge directement mon travail postdoctoral sur **AI4MultiGIS** (plateforme IA pour la gestion de crises géospatiales, UPPA/LIUPPA) en appliquant les mêmes problématiques (données hétérogènes, gestion de crise, souveraineté) à une architecture **agentic AI production-grade sur AWS**.
+🌍 **API Live** : `http://34.248.159.126:8000/docs`
 
 ---
 
-## 📄 Statut
+## 📈 CI/CD — GitHub Actions
 
-🚧 **En cours de développement**
+À chaque `git push` sur `main` :
+1. ✅ Installation des dépendances
+2. ✅ Vérification du style (`black --check`)
+3. ✅ Lancement des tests (`pytest`)
 
-| Composant | Statut |
-|---|---|
-| Structure du projet | ✅ |
-| Data pipeline Medallion | 🔄 En cours |
-| Agents LangGraph | 🔄 En cours |
-| FastAPI REST | 🔄 En cours |
-| Evaluation RAG (RAGAS) | ⬜ À venir |
-| MLflow tracking | ⬜ À venir |
-| Docker + EKS | ⬜ À venir |
-| Déploiement AWS | ⬜ À venir |
-| CI/CD GitHub Actions | ⬜ À venir |
+---
+
+## 🔐 Sécurité
+
+- Clé API obligatoire dans le header `X-API-Key`
+- Secrets dans `.env` — jamais dans le code
+- `.env` exclu de Git via `.gitignore`
+- Security Group AWS — port 8000 uniquement
 
 ---
 
 ## 👩‍💻 Auteur
 
-**Fatima Chahal** - AI Engineer | PhD in Distributed Systems  
+**Fatima Chahal** — AI Engineer | PhD in Distributed Systems (UTT)  
 🔗 [GitHub](https://github.com/FatimaChahal) · [Google Scholar](https://scholar.google.com/citations?user=I106NZcAAAAJ&hl=fr)
