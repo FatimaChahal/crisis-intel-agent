@@ -1,0 +1,34 @@
+{
+    "family": "crisis-intel-agent",
+    "networkMode": "awsvpc",
+    "requiresCompatibilities": ["FARGATE"],
+    "cpu": "256",
+    "memory": "512",
+    "executionRoleArn": "arn:aws:iam::637161850292:role/ecsTaskExecutionRole",
+    "containerDefinitions": [
+        {
+            "name": "crisis-intel-agent",
+            "image": "637161850292.dkr.ecr.eu-west-1.amazonaws.com/crisis-intel-agent:latest",
+            "portMappings": [
+                {
+                    "containerPort": 8000,
+                    "protocol": "tcp"
+                }
+            ],
+            "environment": [
+                {
+                    "name": "API_KEY",
+                    "value": "crisis-intel-secret-key-2026"
+                }
+            ],
+            "logConfiguration": {
+                "logDriver": "awslogs",
+                "options": {
+                    "awslogs-group": "/ecs/crisis-intel-agent",
+                    "awslogs-region": "eu-west-1",
+                    "awslogs-stream-prefix": "ecs"
+                }
+            }
+        }
+    ]
+}
