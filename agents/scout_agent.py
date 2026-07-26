@@ -1,8 +1,9 @@
 from dotenv import load_dotenv
+from torch.mtia import graph
 from langchain_groq import ChatGroq
 from langgraph.graph import END, START, StateGraph
 from typing_extensions import TypedDict
-from langfuse.langchain import CallbackHandler
+from langfuse.callback import CallbackHandler
 import time
 from mlflow_tracking.tracker import track_rag_run
 
@@ -94,10 +95,10 @@ def build_agent():
     """
     graph = StateGraph(AgentState)
     graph.add_node("retrieve", retrieve_context)
-    graph.add_node("analyse", analyse_alerte)
+    graph.add_node("analyze", analyse_alerte)
     graph.add_edge(START, "retrieve")
-    graph.add_edge("retrieve", "analyse")
-    graph.add_edge("analyse", END)
+    graph.add_edge("retrieve", "analyze")
+    graph.add_edge("analyze", END)
     return graph.compile()
 
 
