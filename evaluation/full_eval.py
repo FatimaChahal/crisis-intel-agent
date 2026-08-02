@@ -15,41 +15,56 @@ mlflow.set_experiment("wildfire-agent-evaluation")
 
 
 # ── TEST DATASET ──────────────────────────────────────
-WILDFIRE_QUESTIONS = [
-    {
-        "question": "What happened during the large wildfire in Greece in 2023?",
-        "expected_topic": "wildfire",
-        "ground_truth": "In 2023, Greece experienced a severe wildfire with 96610 hectares burnt during summer."
-    },
-    {
-        "question": "Which wildfires occurred in Portugal in 2017?",
-        "expected_topic": "wildfire",
-        "ground_truth": "Portugal 2017 had severe wildfires burning over 60000 hectares in Viseu Dão Lafões region."
-    },
-    {
-        "question": "What is the risk of wildfire today in Gironde?",
-        "expected_topic": "wildfire",
-        "ground_truth": "Gironde has high wildfire risk in summer due to heat and drought conditions."
-    },
-    {
-        "question": "Tell me about wildfires in Turkey in 2021",
-        "expected_topic": "wildfire",
-        "ground_truth": "Turkey 2021 had a severe wildfire in Antalya burning 54769 hectares of conifer forest."
-    },
-    {
-        "question": "Quels incendies ont touché la France en été ?",
-        "expected_topic": "wildfire",
-        "ground_truth": "France summer wildfires mainly affected Bouches-du-Rhône with conifer vegetation."
-    },
-]
+# WILDFIRE_QUESTIONS = [
+#     {
+#         "question": "What happened during the large wildfire in Greece in 2023?",
+#         "expected_topic": "wildfire",
+#         "ground_truth": "In 2023, Greece experienced a severe wildfire with 96610 hectares burnt during summer."
+#     },
+#     {
+#         "question": "Which wildfires occurred in Portugal in 2017?",
+#         "expected_topic": "wildfire",
+#         "ground_truth": "Portugal 2017 had severe wildfires burning over 60000 hectares in Viseu Dão Lafões region."
+#     },
+#     {
+#         "question": "What is the risk of wildfire today in Gironde?",
+#         "expected_topic": "wildfire",
+#         "ground_truth": "Gironde has high wildfire risk in summer due to heat and drought conditions."
+#     },
+#     {
+#         "question": "Tell me about wildfires in Turkey in 2021",
+#         "expected_topic": "wildfire",
+#         "ground_truth": "Turkey 2021 had a severe wildfire in Antalya burning 54769 hectares of conifer forest."
+#     },
+#     {
+#         "question": "Quels incendies ont touché la France en été ?",
+#         "expected_topic": "wildfire",
+#         "ground_truth": "France summer wildfires mainly affected Bouches-du-Rhône with conifer vegetation."
+#     },
+# ]
 
-OUT_OF_SCOPE_QUESTIONS = [
-    {"question": "What is the best restaurant in Paris?", "expected_topic": "off_topic"},
-    {"question": "How do I make chocolate cake?", "expected_topic": "off_topic"},
-    {"question": "What is the capital of Germany?", "expected_topic": "off_topic"},
-    {"question": "Tell me about football results", "expected_topic": "off_topic"},
-    {"question": "What is the stock price of Apple?", "expected_topic": "off_topic"},
-]
+# OUT_OF_SCOPE_QUESTIONS = [
+#     {"question": "What is the best restaurant in Paris?", "expected_topic": "off_topic"},
+#     {"question": "How do I make chocolate cake?", "expected_topic": "off_topic"},
+#     {"question": "What is the capital of Germany?", "expected_topic": "off_topic"},
+#     {"question": "Tell me about football results", "expected_topic": "off_topic"},
+#     {"question": "What is the stock price of Apple?", "expected_topic": "off_topic"},
+# ]
+
+def load_test_dataset() -> tuple:
+    """
+    Load the professional test dataset from JSON file.
+
+    Returns:
+        Tuple of (wildfire_questions, off_topic_questions).
+    """
+    with open("evaluation/test_dataset.json", "r") as f:
+        dataset = json.load(f)
+    # Use subset to avoid rate limits
+    return dataset["wildfire_questions"][:10], dataset["off_topic_questions"][:10]
+
+
+WILDFIRE_QUESTIONS, OUT_OF_SCOPE_QUESTIONS = load_test_dataset()
 
 
 def score_with_llm(question: str, context: str, answer: str) -> dict:

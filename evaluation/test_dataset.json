@@ -1,0 +1,231 @@
+{
+  "wildfire_questions": [
+    {
+      "question": "What is the current status of the wildfire and are there any evacuation orders in place?",
+      "expected_topic": "wildfire",
+      "ground_truth": "Wildfire in EL (unknown, unknown) in summer 2023. Burnt area: 96610 hectares. Duration: 22 days. Severity: HIGH. Dominant vegetation: MIXED. Protected area affected: 64.7%. Risk score: 0.864."
+    },
+    {
+      "question": "Are there any reported injuries or fatalities as a result of the wildfire?",
+      "expected_topic": "wildfire",
+      "ground_truth": "Wildfire in EL (unknown, unknown) in summer 2023. Burnt area: 96610 hectares. Duration: 22 days. Severity: HIGH. Dominant vegetation: MIXED. Protected area affected: 64.7%. Risk score: 0.864."
+    },
+    {
+      "question": "What is the current status of the wildfire in Viseu Dão Lafões and are there any immediate threats to nearby communities?",
+      "expected_topic": "wildfire",
+      "ground_truth": "Wildfire in PT (Viseu Dão Lafões, Pinheiro de Ázere) in autumn 2017. Burnt area: 67521 hectares. Duration: 7 days. Severity: HIGH. Dominant vegetation: MIXED. Protected area affected: 1.0%. Risk score: 0.476."
+    },
+    {
+      "question": "Are there any reported injuries or fatalities as a result of the 7-day wildfire in Pinheiro de Ázere?",
+      "expected_topic": "wildfire",
+      "ground_truth": "Wildfire in PT (Viseu Dão Lafões, Pinheiro de Ázere) in autumn 2017. Burnt area: 67521 hectares. Duration: 7 days. Severity: HIGH. Dominant vegetation: MIXED. Protected area affected: 1.0%. Risk score: 0.476."
+    },
+    {
+      "question": "What is the current status of the wildfire and are there any reports of injuries or fatalities?",
+      "expected_topic": "wildfire",
+      "ground_truth": "Wildfire in PT (Região de Coimbra, Lagos da Beira e Lajeosa) in autumn 2017. Burnt area: 64321 hectares. Duration: 7 days. Severity: HIGH. Dominant vegetation: TRANSIT. Protected area affected: 15.0%. Risk score: 0.471."
+    },
+    {
+      "question": "Are there any nearby communities or residential areas that are at risk of being affected by the wildfire?",
+      "expected_topic": "wildfire",
+      "ground_truth": "Wildfire in PT (Região de Coimbra, Lagos da Beira e Lajeosa) in autumn 2017. Burnt area: 64321 hectares. Duration: 7 days. Severity: HIGH. Dominant vegetation: TRANSIT. Protected area affected: 15.0%. Risk score: 0.471."
+    },
+    {
+      "question": "What is the current status of the wildfire and are there any reports of injuries or evacuations in the affected areas of Trancoso?",
+      "expected_topic": "wildfire",
+      "ground_truth": "Wildfire in PT (Beiras e Serra da Estrela, Trancoso (São Pedro e Santa Maria) e Souto Maior) in summer 2025. Burnt area: 62104 hectares. Duration: 7 days. Severity: HIGH. Dominant vegetation: TRANSIT. Protected area affected: 0.0%. Risk score: 0.443."
+    },
+    {
+      "question": "Are there any nearby communities or structures that are at risk of being impacted by the wildfire, given its high severity and large burnt area of 62104 hectares?",
+      "expected_topic": "wildfire",
+      "ground_truth": "Wildfire in PT (Beiras e Serra da Estrela, Trancoso (São Pedro e Santa Maria) e Souto Maior) in summer 2025. Burnt area: 62104 hectares. Duration: 7 days. Severity: HIGH. Dominant vegetation: TRANSIT. Protected area affected: 0.0%. Risk score: 0.443."
+    },
+    {
+      "question": "What is the current status of the wildfire and are there any reports of injuries or fatalities?",
+      "expected_topic": "wildfire",
+      "ground_truth": "Wildfire in TR (Antalya, N.A.) in summer 2021. Burnt area: 54769 hectares. Duration: 9 days. Severity: HIGH. Dominant vegetation: CONIFER. Protected area affected: 0.0%. Risk score: 0.419."
+    },
+    {
+      "question": "Are there any nearby residential areas or communities that are being threatened by the fire and need to be evacuated?",
+      "expected_topic": "wildfire",
+      "ground_truth": "Wildfire in TR (Antalya, N.A.) in summer 2021. Burnt area: 54769 hectares. Duration: 9 days. Severity: HIGH. Dominant vegetation: CONIFER. Protected area affected: 0.0%. Risk score: 0.419."
+    },
+    {
+      "question": "What is the current status of the wildfire in León, Burón, and are there any reports of injuries or evacuations?",
+      "expected_topic": "wildfire",
+      "ground_truth": "Wildfire in ES (León, Burón) in summer 2025. Burnt area: 19112 hectares. Duration: 11 days. Severity: MEDIUM. Dominant vegetation: BROADLEA. Protected area affected: 100.0%. Risk score: 0.325."
+    },
+    {
+      "question": "Are there any nearby communities or structures that are at risk due to the wildfire's proximity and the medium severity level?",
+      "expected_topic": "wildfire",
+      "ground_truth": "Wildfire in ES (León, Burón) in summer 2025. Burnt area: 19112 hectares. Duration: 11 days. Severity: MEDIUM. Dominant vegetation: BROADLEA. Protected area affected: 100.0%. Risk score: 0.325."
+    },
+    {
+      "question": "What is the current status of the wildfire and are there any reports of injuries or evacuations?",
+      "expected_topic": "wildfire",
+      "ground_truth": "Wildfire in UA (N.A., N.A.) in spring 2020. Burnt area: 11075 hectares. Duration: 22 days. Severity: MEDIUM. Dominant vegetation: CONIFER. Protected area affected: 0.0%. Risk score: 0.286."
+    },
+    {
+      "question": "Are there any nearby communities or structures that could be threatened by the fire's continued spread?",
+      "expected_topic": "wildfire",
+      "ground_truth": "Wildfire in UA (N.A., N.A.) in spring 2020. Burnt area: 11075 hectares. Duration: 22 days. Severity: MEDIUM. Dominant vegetation: CONIFER. Protected area affected: 0.0%. Risk score: 0.286."
+    },
+    {
+      "question": "What is the current status of the wildfire in Candelaria, Tenerife, and are there any reports of injuries or evacuations?",
+      "expected_topic": "wildfire",
+      "ground_truth": "Wildfire in ES (Tenerife, Candelaria) in summer 2023. Burnt area: 11923 hectares. Duration: 11 days. Severity: MEDIUM. Dominant vegetation: CONIFER. Protected area affected: 94.1%. Risk score: 0.276."
+    },
+    {
+      "question": "Are there any nearby communities or residential areas that are at risk due to the fire's proximity and the prevailing wind conditions?",
+      "expected_topic": "wildfire",
+      "ground_truth": "Wildfire in ES (Tenerife, Candelaria) in summer 2023. Burnt area: 11923 hectares. Duration: 11 days. Severity: MEDIUM. Dominant vegetation: CONIFER. Protected area affected: 94.1%. Risk score: 0.276."
+    },
+    {
+      "question": "What is the current status of the wildfire in Navaconcejo and are there any immediate threats to nearby residents or structures?",
+      "expected_topic": "wildfire",
+      "ground_truth": "Wildfire in ES (Cáceres, Navaconcejo) in summer 2025. Burnt area: 17317 hectares. Duration: 8 days. Severity: MEDIUM. Dominant vegetation: SCLEROPH. Protected area affected: 85.2%. Risk score: 0.269."
+    },
+    {
+      "question": "Are there any reports of injuries or fatalities resulting from the 8-day wildfire event in the Cáceres region of ES?",
+      "expected_topic": "wildfire",
+      "ground_truth": "Wildfire in ES (Cáceres, Navaconcejo) in summer 2025. Burnt area: 17317 hectares. Duration: 8 days. Severity: MEDIUM. Dominant vegetation: SCLEROPH. Protected area affected: 85.2%. Risk score: 0.269."
+    },
+    {
+      "question": "What is the current status of the wildfire and are there any nearby communities that need to be evacuated?",
+      "expected_topic": "wildfire",
+      "ground_truth": "Wildfire in PT (Beiras e Serra da Estrela, Sameiro) in summer 2022. Burnt area: 15134 hectares. Duration: 6 days. Severity: MEDIUM. Dominant vegetation: TRANSIT. Protected area affected: 99.9%. Risk score: 0.251."
+    },
+    {
+      "question": "Are there any reports of injuries or fatalities resulting from the wildfire in the Beiras e Serra da Estrela area?",
+      "expected_topic": "wildfire",
+      "ground_truth": "Wildfire in PT (Beiras e Serra da Estrela, Sameiro) in summer 2022. Burnt area: 15134 hectares. Duration: 6 days. Severity: MEDIUM. Dominant vegetation: TRANSIT. Protected area affected: 99.9%. Risk score: 0.251."
+    },
+    {
+      "question": "What is the current status of the wildfire and are there any evacuation orders in place?",
+      "expected_topic": "wildfire",
+      "ground_truth": "Wildfire in UA (N.A., N.A.) in spring 2026. Burnt area: 478 hectares. Duration: 52 days. Severity: LOW. Dominant vegetation: MIXED. Protected area affected: 0.0%. Risk score: 0.303."
+    },
+    {
+      "question": "Are there any reported injuries or damages to structures within the affected area?",
+      "expected_topic": "wildfire",
+      "ground_truth": "Wildfire in UA (N.A., N.A.) in spring 2026. Burnt area: 478 hectares. Duration: 52 days. Severity: LOW. Dominant vegetation: MIXED. Protected area affected: 0.0%. Risk score: 0.303."
+    },
+    {
+      "question": "What is the current status of the wildfire and are there any reports of it spreading to nearby populated areas?",
+      "expected_topic": "wildfire",
+      "ground_truth": "Wildfire in UA (N.A., N.A.) in summer 2026. Burnt area: 545 hectares. Duration: 26 days. Severity: LOW. Dominant vegetation: MIXED. Protected area affected: 0.0%. Risk score: 0.263."
+    },
+    {
+      "question": "Are there any evacuation orders in place or planned for the surrounding communities, given the wildfire has been burning for 26 days?",
+      "expected_topic": "wildfire",
+      "ground_truth": "Wildfire in UA (N.A., N.A.) in summer 2026. Burnt area: 545 hectares. Duration: 26 days. Severity: LOW. Dominant vegetation: MIXED. Protected area affected: 0.0%. Risk score: 0.263."
+    },
+    {
+      "question": "What is the current status of the wildfire and are there any evacuation orders in place?",
+      "expected_topic": "wildfire",
+      "ground_truth": "Wildfire in UA (N.A., N.A.) in spring 2026. Burnt area: 169 hectares. Duration: 25 days. Severity: LOW. Dominant vegetation: MIXED. Protected area affected: 0.0%. Risk score: 0.251."
+    },
+    {
+      "question": "Are there any reported injuries or structures damaged as a result of the wildfire?",
+      "expected_topic": "wildfire",
+      "ground_truth": "Wildfire in UA (N.A., N.A.) in spring 2026. Burnt area: 169 hectares. Duration: 25 days. Severity: LOW. Dominant vegetation: MIXED. Protected area affected: 0.0%. Risk score: 0.251."
+    },
+    {
+      "question": "What is the current status of the wildfire and are there any nearby communities or structures at risk?",
+      "expected_topic": "wildfire",
+      "ground_truth": "Wildfire in UA (N.A., N.A.) in summer 2026. Burnt area: 457 hectares. Duration: 24 days. Severity: LOW. Dominant vegetation: MIXED. Protected area affected: 0.0%. Risk score: 0.243."
+    },
+    {
+      "question": "Are there any reported injuries or fatalities as a result of the wildfire that has been burning for 24 days?",
+      "expected_topic": "wildfire",
+      "ground_truth": "Wildfire in UA (N.A., N.A.) in summer 2026. Burnt area: 457 hectares. Duration: 24 days. Severity: LOW. Dominant vegetation: MIXED. Protected area affected: 0.0%. Risk score: 0.243."
+    },
+    {
+      "question": "What is the current status of the wildfire in Haute-Corse, Corte, and are there any reports of injuries or structures being threatened?",
+      "expected_topic": "wildfire",
+      "ground_truth": "Wildfire in FR (Haute-Corse, Corte) in summer 2026. Burnt area: 1095 hectares. Duration: 11 days. Severity: LOW. Dominant vegetation: CONIFER. Protected area affected: 100.0%. Risk score: 0.217."
+    },
+    {
+      "question": "Are there any evacuation orders in place for the surrounding areas, given that the fire has been burning for 11 days and has affected a protected area?",
+      "expected_topic": "wildfire",
+      "ground_truth": "Wildfire in FR (Haute-Corse, Corte) in summer 2026. Burnt area: 1095 hectares. Duration: 11 days. Severity: LOW. Dominant vegetation: CONIFER. Protected area affected: 100.0%. Risk score: 0.217."
+    }
+  ],
+  "off_topic_questions": [
+    {
+      "question": "What is the best restaurant in Paris?",
+      "expected_topic": "off_topic",
+      "ground_truth": ""
+    },
+    {
+      "question": "How do I make chocolate cake?",
+      "expected_topic": "off_topic",
+      "ground_truth": ""
+    },
+    {
+      "question": "What is the capital of Germany?",
+      "expected_topic": "off_topic",
+      "ground_truth": ""
+    },
+    {
+      "question": "Tell me about football results",
+      "expected_topic": "off_topic",
+      "ground_truth": ""
+    },
+    {
+      "question": "What is the stock price of Apple?",
+      "expected_topic": "off_topic",
+      "ground_truth": ""
+    },
+    {
+      "question": "Who won the last World Cup?",
+      "expected_topic": "off_topic",
+      "ground_truth": ""
+    },
+    {
+      "question": "How do I learn Python programming?",
+      "expected_topic": "off_topic",
+      "ground_truth": ""
+    },
+    {
+      "question": "What is the weather forecast for London?",
+      "expected_topic": "off_topic",
+      "ground_truth": ""
+    },
+    {
+      "question": "Recommend me a good movie",
+      "expected_topic": "off_topic",
+      "ground_truth": ""
+    },
+    {
+      "question": "What is the population of France?",
+      "expected_topic": "off_topic",
+      "ground_truth": ""
+    },
+    {
+      "question": "كيف أطبخ الكسكس؟",
+      "expected_topic": "off_topic",
+      "ground_truth": ""
+    },
+    {
+      "question": "Qual è la migliore pizza a Napoli?",
+      "expected_topic": "off_topic",
+      "ground_truth": ""
+    },
+    {
+      "question": "Comment apprendre le français ?",
+      "expected_topic": "off_topic",
+      "ground_truth": ""
+    },
+    {
+      "question": "What are the best stocks to buy?",
+      "expected_topic": "off_topic",
+      "ground_truth": ""
+    },
+    {
+      "question": "Tell me a joke",
+      "expected_topic": "off_topic",
+      "ground_truth": ""
+    }
+  ]
+}
