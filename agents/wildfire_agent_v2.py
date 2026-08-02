@@ -5,6 +5,7 @@ from langfuse.callback import CallbackHandler
 from langgraph.graph import END, START, StateGraph
 from typing_extensions import TypedDict
 
+from agents.tools.weather_tool import get_weather_conditions
 from evaluation.vector_store import search_wildfires
 from mlflow_tracking.tracker import track_rag_run
 
@@ -25,32 +26,17 @@ class WildfireState(TypedDict):
     analysis: str
     answer: str
     references: str
+    weather_data: str
     stop_reason: str
 
 
 def create_llm() -> ChatGroq:
-    """
-    Create and return a Groq LLM instance.
-
-    Returns:
-        A ChatGroq instance using Llama 3.3 70B.
-    """
+    """Create and return a Groq LLM instance."""
     return ChatGroq(model="llama-3.3-70b-versatile", temperature=0)
 
 
-# ─────────────────────────────────────────
-# AGENT 1 — CLASSIFIER
-# ─────────────────────────────────────────
 def classifier_agent(state: WildfireState) -> WildfireState:
-    """
-    Classify the question: relevance, language, and type.
-
-    Args:
-        state: Current agent state.
-
-    Returns:
-        Updated state with language, question_type and is_relevant.
-    """
+    """Classify the question: relevance, language, and type."""
     llm = create_llm()
     history_text = f"\nConversation history:\n{state['history']}" if state.get("history") else ""
 
@@ -60,12 +46,6 @@ Analyze the following question and respond ONLY in this exact format:
 RELEVANT: YES or NO
 LANGUAGE: (language name in English, e.g. French, English, Arabic, Spanish)
 TYPE: stats OR case OR recommendation OR comparison
-
-Definitions:
-- stats: questions about numbers, areas, counts
-- case: questions about specific events or places
-- recommendation: questions about what to do
-- comparison: questions comparing countries, years, regions
 {history_text}
 Question: {state['question']}""",
         config={"callbacks": [langfuse_handler]}
@@ -84,33 +64,29 @@ Question: {state['question']}""",
         elif "TYPE:" in line:
             question_type = line.split(":", 1)[1].strip().lower()
 
-    return {
-        **state,
-        "is_relevant": is_relevant,
-        "language": language,
-        "question_type": question_type
-    }
+    return {**state, "is_relevant": is_relevant, "language": language, "question_type": question_type}
 
 
-# ─────────────────────────────────────────
-# AGENT 2 — RETRIEVER
-# ─────────────────────────────────────────
+def weather_node(state: WildfireState) -> WildfireState:
+    """Fetch current weather conditions using MCP weather tool."""
+    llm = create_llm()
+    location = llm.invoke(
+        f"""Extract the location (city or country) from this question.
+Return ONLY the location name, nothing else.
+If no specific location, return 'france'.
+Question: {state['question']}"""
+    ).content.strip()
+
+    weather = get_weather_conditions.invoke(location)
+    return {**state, "weather_data": weather}
+
+
 def retriever_agent(state: WildfireState) -> WildfireState:
-    """
-    Retrieve similar wildfire events from ChromaDB and validate quality.
-
-    Args:
-        state: Current agent state.
-
-    Returns:
-        Updated state with context and metadata.
-    """
+    """Retrieve similar wildfire events from ChromaDB and validate quality."""
     if not state["is_relevant"]:
         return {**state, "context": [], "metadata": []}
 
     docs, metas = search_wildfires(state["question"], n=3)
-
-    # Validate quality — check if best score is meaningful
     best_score = max((m.get("risk_score", 0) for m in metas), default=0)
     if best_score < 0.001:
         return {**state, "context": [], "metadata": [], "stop_reason": "no_results"}
@@ -118,19 +94,8 @@ def retriever_agent(state: WildfireState) -> WildfireState:
     return {**state, "context": docs, "metadata": metas, "stop_reason": ""}
 
 
-# ─────────────────────────────────────────
-# AGENT 3 — ANALYST
-# ─────────────────────────────────────────
 def analyst_agent(state: WildfireState) -> WildfireState:
-    """
-    Analyze retrieved wildfire data and compute statistics.
-
-    Args:
-        state: Current agent state with retrieved context.
-
-    Returns:
-        Updated state with structured analysis.
-    """
+    """Analyze retrieved wildfire data and compute statistics."""
     if not state["context"]:
         return {**state, "analysis": ""}
 
@@ -155,29 +120,18 @@ Extract and compute:
 4. Dominant vegetation types
 5. Risk level summary
 
-Be precise and data-driven. Use numbers from the data.""",
+Be precise and data-driven.""",
         config={"callbacks": [langfuse_handler]}
     ).content
 
     return {**state, "analysis": analysis}
 
 
-# ─────────────────────────────────────────
-# AGENT 4 — RESPONDER
-# ─────────────────────────────────────────
 def responder_agent(state: WildfireState) -> WildfireState:
-    """
-    Generate final answer with references in user's language.
-
-    Args:
-        state: Current agent state with analysis and context.
-
-    Returns:
-        Updated state with final answer and formatted references.
-    """
+    """Generate final answer with references in user's language."""
     llm = create_llm()
 
-    # Build references section
+    # Build references
     refs = []
     for i, meta in enumerate(state["metadata"]):
         ref = (
@@ -192,13 +146,17 @@ def responder_agent(state: WildfireState) -> WildfireState:
         refs.append(ref)
     references_text = "\n".join(refs)
 
+    # Weather section
+    weather_section = ""
+    if state.get("weather_data"):
+        weather_section = f"\nCURRENT WEATHER CONDITIONS (real-time MCP tool):\n{state['weather_data']}\n"
+
     response = llm.invoke(
         f"""You are a wildfire crisis expert assistant.
-Generate a clear and structured response to the user's question.
 Answer in {state['language']}.
 Cite sources using [1], [2], [3] when referencing specific events.
 Do NOT invent data not present in the analysis.
-
+{weather_section}
 ANALYSIS:
 {state['analysis']}
 
@@ -211,29 +169,21 @@ QUESTION TYPE: {state['question_type']}
 Structure your answer with:
 - Direct answer to the question
 - Key findings with source citations [1], [2], [3]
-- Recommended actions (if relevant)
+- Current weather conditions and risk assessment (if available)
+- Recommended actions
 - Risk assessment""",
         config={"callbacks": [langfuse_handler]}
     ).content
 
     final_answer = f"{response}\n\n📚 **Sources :**\n{references_text}"
+    if state.get("weather_data"):
+        final_answer += f"\n\n🌤️ **Météo temps réel :**\n{state['weather_data']}"
 
     return {**state, "answer": final_answer, "references": references_text}
 
 
-# ─────────────────────────────────────────
-# STOP NODE
-# ─────────────────────────────────────────
 def stop_node(state: WildfireState) -> WildfireState:
-    """
-    Handle out-of-scope or no-result cases.
-
-    Args:
-        state: Current agent state.
-
-    Returns:
-        Updated state with appropriate stop message.
-    """
+    """Handle out-of-scope or no-result cases."""
     if not state["is_relevant"]:
         msg = (
             "❌ Je suis spécialisé uniquement dans l'analyse des incendies de forêt.\n"
@@ -244,18 +194,30 @@ def stop_node(state: WildfireState) -> WildfireState:
     else:
         msg = (
             "⚠️ Aucun événement suffisamment similaire trouvé dans la base de données.\n"
-            "No sufficiently similar wildfire events found in the database.\n"
+            "No sufficiently similar wildfire events found.\n"
             "Please try with different keywords (country, year, season, region...)."
         )
     return {**state, "answer": msg}
 
 
-# ─────────────────────────────────────────
-# ROUTING
-# ─────────────────────────────────────────
+def needs_weather(state: WildfireState) -> str:
+    """Decide if weather data is needed."""
+    question_lower = state["question"].lower()
+    weather_triggers = [
+        "today", "now", "current", "risk", "danger",
+        "aujourd'hui", "maintenant", "risque", "actuellement",
+        "conditions", "météo", "weather", "temperature"
+    ]
+    if any(t in question_lower for t in weather_triggers):
+        return "weather"
+    return "retrieve"
+
+
 def route_after_classifier(state: WildfireState) -> str:
-    """Route after classifier: retrieve or stop."""
-    return "retrieve" if state["is_relevant"] else "stop"
+    """Route after classifier: weather, retrieve or stop."""
+    if not state["is_relevant"]:
+        return "stop"
+    return needs_weather(state)
 
 
 def route_after_retriever(state: WildfireState) -> str:
@@ -265,19 +227,12 @@ def route_after_retriever(state: WildfireState) -> str:
     return "analyze"
 
 
-# ─────────────────────────────────────────
-# BUILD GRAPH
-# ─────────────────────────────────────────
 def build_wildfire_agent_v2():
-    """
-    Build and compile the professional 4-agent Wildfire LangGraph.
-
-    Returns:
-        Compiled LangGraph agent with 4 specialized agents.
-    """
+    """Build the professional 4-agent Wildfire LangGraph with MCP weather tool."""
     graph = StateGraph(WildfireState)
 
     graph.add_node("classifier", classifier_agent)
+    graph.add_node("weather", weather_node)
     graph.add_node("retriever", retriever_agent)
     graph.add_node("analyst", analyst_agent)
     graph.add_node("responder", responder_agent)
@@ -285,9 +240,11 @@ def build_wildfire_agent_v2():
 
     graph.add_edge(START, "classifier")
     graph.add_conditional_edges("classifier", route_after_classifier, {
+        "weather": "weather",
         "retrieve": "retriever",
         "stop": "stop"
     })
+    graph.add_edge("weather", "retriever")
     graph.add_conditional_edges("retriever", route_after_retriever, {
         "analyze": "analyst",
         "stop": "stop"
@@ -299,20 +256,8 @@ def build_wildfire_agent_v2():
     return graph.compile()
 
 
-# ─────────────────────────────────────────
-# RUN AGENT
-# ─────────────────────────────────────────
 def run_agent_v2(question: str, history: list = None) -> str:
-    """
-    Run the professional wildfire agent v2.
-
-    Args:
-        question: User question in any language.
-        history: Chat history list.
-
-    Returns:
-        Final answer with references.
-    """
+    """Run the professional wildfire agent v2."""
     history_text = ""
     if history:
         for h in history[-3:]:
@@ -338,6 +283,7 @@ def run_agent_v2(question: str, history: list = None) -> str:
         "analysis": "",
         "answer": "",
         "references": "",
+        "weather_data": "",
         "stop_reason": ""
     })
 
@@ -359,3 +305,5 @@ if __name__ == "__main__":
     print(run_agent_v2("Quels sont les plus grands incendies en France ?"))
     print("\n=== Test 2 — Hors sujet ===")
     print(run_agent_v2("Quel est le meilleur restaurant à Paris ?"))
+    print("\n=== Test 3 — Risque actuel Gironde ===")
+    print(run_agent_v2("Y a-t-il un risque d'incendie aujourd'hui en Gironde ?"))
