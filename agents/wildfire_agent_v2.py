@@ -31,7 +31,8 @@ class WildfireState(TypedDict):
 
 
 def create_llm() -> ChatGroq:
-    return ChatGroq(model="gemma2-9b-it", temperature=0)
+    """Create and return a Groq LLM instance."""
+    return ChatGroq(model="llama-3.1-8b-instant", temperature=0)
 
 
 def classifier_agent(state: WildfireState) -> WildfireState:
