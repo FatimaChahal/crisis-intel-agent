@@ -68,19 +68,20 @@ def load_test_dataset() -> tuple:
 WILDFIRE_QUESTIONS, OUT_OF_SCOPE_QUESTIONS = load_test_dataset()
 
 
-def score_with_llm(question: str, context: str, answer: str) -> dict:
+def score_with_llm(question: str, context: str, answer: str, ground_truth: str) -> dict:
     """
-    Score RAG response using LLM as judge.
+    Score RAG response using LLM as judge with extended metrics.
 
     Args:
         question: Original question.
         context: Retrieved context documents.
         answer: Generated answer.
+        ground_truth: Expected answer for correctness scoring.
 
     Returns:
-        Dictionary with faithfulness and relevancy scores.
+        Dictionary with all RAG evaluation scores.
     """
-    llm = ChatGroq(model="llama-3.3-70b-versatile", temperature=0)
+    llm = ChatGroq(model="llama-3.1-8b-instant", temperature=0)
 
     prompt = f"""You are a RAG evaluation expert. Score the following on a scale of 0.0 to 1.0.
 
@@ -91,27 +92,34 @@ CONTEXT (retrieved documents):
 
 ANSWER: {answer}
 
-Evaluate:
-1. FAITHFULNESS (0.0-1.0): Is the answer based on the context? 1.0 = fully grounded
-2. RELEVANCY (0.0-1.0): Does the answer address the question? 1.0 = perfectly relevant
+GROUND TRUTH: {ground_truth}
 
-Respond ONLY in this format:
+Evaluate:
+1. FAITHFULNESS (0.0-1.0): Is the answer based ONLY on the context? 1.0 = fully grounded
+2. RELEVANCY (0.0-1.0): Does the answer address the question? 1.0 = perfectly relevant
+3. CONTEXT_PRECISION (0.0-1.0): Is the retrieved context relevant to the question? 1.0 = perfectly relevant
+4. CORRECTNESS (0.0-1.0): Is the answer factually correct compared to ground truth? 1.0 = perfectly correct
+
+Respond ONLY in this exact format:
 FAITHFULNESS: <score>
-RELEVANCY: <score>"""
+RELEVANCY: <score>
+CONTEXT_PRECISION: <score>
+CORRECTNESS: <score>"""
 
     response = llm.invoke(prompt).content
-    scores = {"faithfulness": 0.0, "relevancy": 0.0}
+    scores = {
+        "faithfulness": 0.0,
+        "relevancy": 0.0,
+        "context_precision": 0.0,
+        "correctness": 0.0,
+    }
     for line in response.strip().split("\n"):
-        if "FAITHFULNESS:" in line:
-            try:
-                scores["faithfulness"] = float(line.split(":")[1].strip())
-            except ValueError:
-                pass
-        elif "RELEVANCY:" in line:
-            try:
-                scores["relevancy"] = float(line.split(":")[1].strip())
-            except ValueError:
-                pass
+        for key in scores:
+            if key.upper() + ":" in line.upper():
+                try:
+                    scores[key] = float(line.split(":")[1].strip())
+                except ValueError:
+                    pass
     return scores
 
 
@@ -197,15 +205,17 @@ def evaluate_guardrails() -> dict:
 
 def evaluate_rag() -> dict:
     """
-    Evaluate RAG pipeline with faithfulness and relevancy scores.
+    Evaluate RAG pipeline with extended professional metrics.
 
     Returns:
-        Dictionary with RAG evaluation metrics.
+        Dictionary with all RAG evaluation metrics.
     """
     print("\n📊 Evaluating RAG Pipeline...")
 
     all_faithfulness = []
     all_relevancy = []
+    all_context_precision = []
+    all_correctness = []
     all_latencies = []
 
     for tc in WILDFIRE_QUESTIONS:
@@ -219,37 +229,40 @@ def evaluate_rag() -> dict:
             continue
 
         context = "\n\n".join(docs)
-
-        # Generate answer
-        from langchain_groq import ChatGroq
-
-        llm = ChatGroq(model="llama-3.3-70b-versatile", temperature=0)
+        llm = ChatGroq(model="llama-3.1-8b-instant", temperature=0)
         answer = llm.invoke(
             f"You are a wildfire expert. Answer based on this context:\n{context}\n\nQuestion: {tc['question']}"
         ).content
 
-        # Score
-        scores = score_with_llm(tc["question"], context, answer)
+        scores = score_with_llm(
+            tc["question"], context, answer, tc.get("ground_truth", "")
+        )
         all_faithfulness.append(scores["faithfulness"])
         all_relevancy.append(scores["relevancy"])
+        all_context_precision.append(scores["context_precision"])
+        all_correctness.append(scores["correctness"])
 
         print(f"  📄 {tc['question'][:50]}...")
         print(
-            f"     Faithfulness: {scores['faithfulness']:.2f} | Relevancy: {scores['relevancy']:.2f} | Latency: {latency:.0f}ms"
+            f"     Faith: {scores['faithfulness']:.2f} | Rel: {scores['relevancy']:.2f} | "
+            f"Ctx: {scores['context_precision']:.2f} | Corr: {scores['correctness']:.2f} | "
+            f"Lat: {latency:.0f}ms"
         )
 
-    avg_faith = sum(all_faithfulness) / len(all_faithfulness) if all_faithfulness else 0
-    avg_rel = sum(all_relevancy) / len(all_relevancy) if all_relevancy else 0
-    avg_latency = sum(all_latencies) / len(all_latencies) if all_latencies else 0
+    # Compute aggregates
+    def avg(lst):
+        return sum(lst) / len(lst) if lst else 0
 
-    print(f"\n  Avg Faithfulness   : {avg_faith:.2f}")
-    print(f"  Avg Relevancy      : {avg_rel:.2f}")
-    print(f"  Avg Latency (ms)   : {avg_latency:.0f}")
+    def p95(lst):
+        return sorted(lst)[int(len(lst) * 0.95)] if lst else 0
 
     return {
-        "avg_faithfulness": avg_faith,
-        "avg_relevancy": avg_rel,
-        "avg_latency_ms": avg_latency,
+        "avg_faithfulness": avg(all_faithfulness),
+        "avg_relevancy": avg(all_relevancy),
+        "avg_context_precision": avg(all_context_precision),
+        "avg_correctness": avg(all_correctness),
+        "avg_latency_ms": avg(all_latencies),
+        "p95_latency_ms": p95(all_latencies),
     }
 
 
@@ -292,6 +305,10 @@ def run_full_evaluation() -> None:
         print(f"  Avg Faithfulness     : {rag_metrics['avg_faithfulness']:.2f}")
         print(f"  Avg Relevancy        : {rag_metrics['avg_relevancy']:.2f}")
         print(f"  Avg Latency (ms)     : {rag_metrics['avg_latency_ms']:.0f}")
+        print(f"  Avg Context Precision: {rag_metrics['avg_context_precision']:.2f}")
+        print(f"  Avg Correctness      : {rag_metrics['avg_correctness']:.2f}")
+        print(f"  Avg Latency (ms)     : {rag_metrics['avg_latency_ms']:.0f}")
+        print(f"  P95 Latency (ms)     : {rag_metrics['p95_latency_ms']:.0f}")
         print("=" * 60)
         print("✅ All metrics logged to MLflow")
 

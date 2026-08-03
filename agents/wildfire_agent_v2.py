@@ -78,12 +78,10 @@ Question: {state['question']}""",
 def weather_node(state: WildfireState) -> WildfireState:
     """Fetch current weather conditions using MCP weather tool."""
     llm = create_llm()
-    location = llm.invoke(
-        f"""Extract the location (city or country) from this question.
+    location = llm.invoke(f"""Extract the location (city or country) from this question.
 Return ONLY the location name, nothing else.
 If no specific location, return 'france'.
-Question: {state['question']}"""
-    ).content.strip()
+Question: {state['question']}""").content.strip()
 
     weather = get_weather_conditions.invoke(location)
     return {**state, "weather_data": weather}

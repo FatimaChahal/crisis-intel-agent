@@ -79,9 +79,7 @@ def guardrail(state: WildfireState) -> WildfireState:
     if state.get("history"):
         history_text = f"\nConversation history:\n{state['history']}\n"
 
-    check = (
-        llm.invoke(
-            f"""You are a content filter for a wildfire analysis system.
+    check = llm.invoke(f"""You are a content filter for a wildfire analysis system.
 Determine if the following question is related to wildfires, forest fires,
 burnt areas, fire management, or fire crisis events.
 The question can be in ANY language.
@@ -89,11 +87,7 @@ Consider the conversation history to understand the context.
 {history_text}
 Current question: {state['question']}
 
-Answer ONLY with YES or NO."""
-        )
-        .content.strip()
-        .upper()
-    )
+Answer ONLY with YES or NO.""").content.strip().upper()
 
     is_relevant = "YES" in check
     return {**state, "is_relevant": is_relevant}
