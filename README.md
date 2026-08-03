@@ -1,310 +1,119 @@
-# 🚨 Crisis Intel Agent
+# 🔥 Crisis Intel Agent — Wildfire Intelligence Platform
 
-> **Plateforme agentique de veille et d'analyse de crises géospatiales**  
-> Multi-agent · Agentic RAG · MLOps · Cloud AWS · API REST · CI/CD · RAG Evaluation
-
----
-
-## 🎯 Objectif
-
-Crisis Intel Agent automatise la **veille, l'analyse et le résumé de situations de crise** (inondations, risques environnementaux, événements géospatiaux) à partir de sources de données hétérogènes (news, données GIS, capteurs).
-
-Le système est construit autour d'une architecture **multi-agents orchestrée avec LangGraph**, d'un pipeline **Agentic RAG évalué**, et d'un déploiement **MLOps-grade sur AWS ECS Fargate**.
+> **Plateforme agentique de veille et d'analyse des incendies de forêt en Europe**  
+> Multi-agent · Agentic RAG · MLOps · Cloud AWS · API REST · CI/CD · Évaluation RAG
 
 ---
 
-## 🏗️ Architecture
+## 🎯 Problématique
 
+Les opérateurs de gestion de crise (pompiers, préfectures, ONG, protection civile) manquent d'un outil pour **accéder instantanément aux leçons tirées des incendies passés similaires** lors d'une situation d'urgence.
+
+**Sans système :**
 ```
-Sources (News / GIS / Capteurs)
-        │
-        ▼
-┌──────────────────────────────────────────┐
-│    Data Pipeline — Medallion (S3)        │
-│  Bronze (brut) → Silver (propre) → Gold  │
-│  Pandas · Pydantic · JSON · boto3        │
-└──────────────────────────────────────────┘
-        │
-        ▼
-┌──────────────────────────────────────────┐
-│       Scout Agent (LangGraph)            │
-│                                          │
-│   Retrieve ──▶ Analyze ──▶ Rapport       │
-│   ChromaDB     Groq/Llama   Structuré    │
-│   (RAG)        3.3 70B                   │
-└──────────────────────────────────────────┘
-        │
-        ▼
-┌──────────────────────────────────────────┐
-│        FastAPI REST API                  │
-│   GET /health  POST /ingest              │
-│   Sécurisée par API Key (X-API-Key)      │
-└──────────────────────────────────────────┘
-        │
-        ▼
-┌──────────────────────────────────────────┐
-│     Observabilité & MLOps                │
-│  Langfuse (tracing LLM) · MLflow         │
-│  RAG Evaluation (LLM-as-judge)           │
-│  GitHub Actions CI/CD (black + pytest)   │
-└──────────────────────────────────────────┘
-        │
-        ▼
-┌──────────────────────────────────────────┐
-│     Cloud AWS                            │
-│  Docker → ECR → ECS Fargate              │
-│  S3 · CloudWatch · Security Groups       │
-└──────────────────────────────────────────┘
+Opérateur cherche manuellement dans des archives PDF, Excel, rapports...
+→ Des heures perdues | Risque de rater des infos cruciales | Chaque minute compte
+```
+
+**Avec Crisis Intel Agent :**
+```
+Opérateur : "Y a-t-il un risque d'incendie aujourd'hui en Gironde ?"
+→ Météo temps réel : 35°C, humidité 28%, risque 🟠 HIGH
+→ Cas similaires : Gironde 2022, Bouches-du-Rhône 2017...
+→ Actions recommandées basées sur données réelles Copernicus
+→ Réponse en < 1 seconde, dans la langue de l'opérateur
 ```
 
 ---
 
-## 🔄 Exemple concret — alerte inondation
+## 📊 Données réelles — Copernicus EFFIS + MODIS
 
-**Entrée (Bronze — brute) :**
-```json
-{
-    "titre": "  FLOOD IN GERMANY  ",
-    "pays": "  germany  ",
-    "severite": "  ORANGE  "
-}
-```
-
-**Silver — nettoyée (Pandas + Pydantic) :**
-```json
-{
-    "titre": "flood in germany",
-    "pays": "germany",
-    "severite": "orange"
-}
-```
-
-**Gold — enrichie + analysée par l'agent :**
-```
-• Type : Flood crisis
-• Sévérité : Orange (moins grave que 2021, attention immédiate requise)
-• Actions recommandées : évacuation d'urgence, déploiement des équipes,
-  restauration des services essentiels — basé sur crises passées similaires
-
-Latence : ~1 450 ms | Tokens : 362 | Tracé dans Langfuse + MLflow
-```
-
----
-
-## 🤖 Agent LangGraph
-
-| Node | Rôle | Technologie |
+| Source | Description | Volume |
 |---|---|---|
-| **Retrieve** | Cherche les crises passées similaires | ChromaDB + `all-MiniLM-L6-v2` |
-| **Analyze** | Génère un rapport contextualisé | Groq / Llama 3.3 70B |
-| **Rapport** | Retourne 3 bullet points structurés | LangGraph State |
-
-**Pourquoi RAG ?**
-- Sans RAG → le LLM répond depuis son entraînement général → risque d'hallucination
-- Avec RAG → l'agent consulte d'abord les crises passées → réponse ancrée, traçable, vérifiable
+| **EFFIS Copernicus** | Totaux par pays/année 1980-2024 | 45 années × 31 pays |
+| **MODIS Satellite** | Incendies individuels avec polygones GPS | 102 561 incendies |
+| **Silver** | Données nettoyées + features calculées | 69 435 lignes |
+| **Gold** | Enrichi + risk_score + summaries textuels | 18 607 incendies |
 
 ---
 
-## 📊 Évaluation RAG — LLM-as-Judge
+## 🤖 Architecture des 4 agents LangGraph
 
-Approche d'évaluation custom avec **LLM-as-judge** (Groq/Llama 3.3) — deux métriques clés trackées dans MLflow :
-
-| Métrique | Description | Score obtenu |
-|---|---|---|
-| **Faithfulness** | La réponse est-elle fidèle aux documents récupérés ? | **0.90 / 1.0** ✅ |
-| **Relevancy** | La réponse répond-elle à la question posée ? | **1.00 / 1.0** ✅ |
-
-```bash
-# Lancer l'évaluation
-python -m evaluation.rag_eval
+```
+Question utilisateur
+      │
+      ▼
+CLASSIFIER ──▶ RETRIEVER ──▶ ANALYST ──▶ RESPONDER
+Langue/type    ChromaDB      Stats         [1][2][3]
+Guardrails     Validation    Patterns      Multilingue
+      │
+      ├── MCP Weather Tool (OpenMeteo — temps réel)
 ```
 
-R�sultats trackés automatiquement dans MLflow pour comparaison entre runs.
+| Agent | Rôle |
+|---|---|
+| **CLASSIFIER** | Langue + type + guardrail + trigger météo |
+| **RETRIEVER** | ChromaDB search + validation qualité |
+| **ANALYST** | Stats, patterns, synthèse structurée |
+| **RESPONDER** | Réponse finale + citations [1][2][3] + météo |
 
 ---
 
-## 📊 Data Pipeline — Medallion + Data Mesh
+## 📐 Évaluation RAG — 45 questions professionnelles
 
-```
-Bronze  →  données brutes ingérées (JSON, CSV) — stockage S3
-Silver  →  données nettoyées (Pandas + Pydantic validation)
-Gold    →  données enrichies + embeddings — prêtes pour le RAG
-```
-
-Chaque source (news, GIS, alertes) = domaine **Data Mesh** indépendant avec son propre pipeline.
+| Métrique | Score | Seuil pro | Status |
+|---|---|---|---|
+| **Guardrail Precision** | 0.90 | ≥ 0.85 | ✅ |
+| **Wildfire Recall** | 1.00 | ≥ 0.85 | ✅ |
+| **Off-topic Block Rate** | 0.80 | ≥ 0.80 | ✅ |
+| **Avg Faithfulness** | 0.96 | ≥ 0.85 | ✅ |
+| **Avg Relevancy** | 0.95 | ≥ 0.85 | ✅ |
+| **Avg Latency** | 792ms | ≤ 2000ms | ✅ |
 
 ---
 
 ## 🛠️ Stack technique
 
-### LLM & Agents
-- `langchain` + `langchain-groq` — orchestration LLM
-- `langgraph` — orchestration multi-agents avec état
-- `langfuse` — observabilité et tracing (latence, tokens, prompts)
-- LLM : **Groq / Llama 3.3 70B**
-
-### RAG & Embeddings
-- `chromadb` — vector store local
-- `sentence-transformers` (`all-MiniLM-L6-v2`) — embeddings
-- Chunking stratégique + scoring de similarité
-
-### RAG Evaluation
-- LLM-as-judge (Groq/Llama 3.3) — évaluation automatique
-- Métriques : Faithfulness (0.90) + Relevancy (1.00)
-- Résultats trackés dans MLflow
-
-### Data Pipeline
-- `pandas` — nettoyage et transformation (Bronze → Silver)
-- `pydantic` — validation stricte des types (PEP 484)
-- `boto3` — interface S3 (Bronze/Silver/Gold)
-- `python-dotenv` — gestion des secrets
-
-### MLOps
-- `mlflow` — tracking expériences (paramètres, métriques, runs)
-- `docker` — conteneurisation
-- **GitHub Actions** — CI/CD (black + pytest à chaque push)
-
-### API & Sécurité
-- `fastapi` + `uvicorn` — API REST asynchrone
-- `APIKeyHeader` — authentification par clé (`X-API-Key`)
-- Sans clé → **401 Unauthorized** | Avec clé → **200 OK**
-- Documentation Swagger auto : `/docs`
-
-### Cloud AWS
-| Service | Usage |
-|---|---|
-| **ECR** | Registre Docker |
-| **ECS Fargate** | Exécution sans serveur |
-| **S3** | Stockage Bronze/Silver/Gold |
-| **CloudWatch** | Logs et monitoring |
-
-### Qualité du code Python
-- **PEP 8** — formatage (`black`)
-- **PEP 257** — docstrings (Args/Returns)
-- **PEP 484** — type hints (`mypy`)
-- **pytest** — 3 tests passent en 0.03s ✅
+- **LLM** : Groq / Llama 3.3 70B
+- **Agents** : LangChain + LangGraph
+- **RAG** : ChromaDB + all-MiniLM-L6-v2
+- **MCP** : OpenMeteo API (météo temps réel)
+- **MLOps** : MLflow + Langfuse + Docker
+- **Interface** : Gradio (chatbox multilingue)
+- **API** : FastAPI + API Key security
+- **Cloud** : AWS ECR + ECS Fargate
+- **CI/CD** : GitHub Actions (black + pytest)
+- **Data** : Pandas + GeoPandas + Pydantic
 
 ---
 
-## 📁 Structure du projet
-
-```
-crisis-intel-agent/
-│
-├── agents/
-│   ├── __init__.py
-│   └── scout_agent.py        # Agent LangGraph (Retrieve → Analyze → Rapport)
-├── api/
-│   ├── __init__.py
-│   └── main.py               # FastAPI — /health + /ingest sécurisé
-├── data/
-│   ├── bronze/
-│   │   ├── alerts.csv
-│   │   ├── alerts.json
-│   │   └── storage.py        # Client S3 local
-│   ├── silver/
-│   │   ├── clean.py          # clean_text + clean_alert
-│   │   ├── models.py         # Alert — modèle Pydantic
-│   │   └── transform.py      # Pipeline Bronze → Silver
-│   └── gold/
-│       └── crisis_reports.py # Base de connaissances RAG
-├── evaluation/
-│   ├── __init__.py
-│   ├── vector_store.py       # ChromaDB — build + search
-│   └── rag_eval.py           # RAG evaluation — LLM-as-judge
-├── mlflow_tracking/
-│   ├── __init__.py
-│   └── tracker.py            # MLflow — log params + metrics
-├── infrastructure/
-│   ├── docker/
-│   │   ├── Dockerfile
-│   │   └── task-definition.json
-│   └── k8s/
-├── tests/
-│   ├── __init__.py
-│   └── test_clean.py         # 3 tests pytest
-├── .github/
-│   └── workflows/
-│       └── ci.yml            # GitHub Actions CI
-├── .gitignore
-├── docker-compose.yml
-├── requirements.txt
-└── README.md
-```
-
----
-
-## 🚀 Lancement rapide (local)
+## 🚀 Lancement rapide
 
 ```bash
-# Cloner
 git clone https://github.com/FatimaChahal/crisis-intel-agent
 cd crisis-intel-agent
-
-# Environnement virtuel
-python3 -m venv venv
-source venv/bin/activate
+python3 -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
+cp .env.example .env  # Remplir GROQ_API_KEY, LANGFUSE_*, API_KEY
 
-# Variables d'environnement
-cp .env.example .env
-# Remplir : GROQ_API_KEY, LANGFUSE_PUBLIC_KEY, LANGFUSE_SECRET_KEY, API_KEY
+# Pipeline Medallion
+python3 data/bronze/ingest.py
+python3 data/silver/transform_fires.py
+python3 data/gold/enrich_fires.py
+python3 -m evaluation.vector_store
 
-# Lancer l'API
-uvicorn api.main:app --reload
-# http://localhost:8000/docs
+# Chatbox
+python3 -m api.chatbox  # → http://localhost:7860
 
-# Lancer l'agent
-python -m agents.scout_agent
-
-# Lancer l'évaluation RAG
-python -m evaluation.rag_eval
-```
-
-## 🧪 Tests
-
-```bash
-python -m pytest tests/ -v
-# 3 passed in 0.03s ✅
+# Évaluation
+python3 -m evaluation.full_eval
 ```
 
 ---
 
-## ☁️ Déploiement AWS
+## 🌍 API Live
 
-```bash
-# Login ECR
-aws ecr get-login-password --region eu-west-1 | \
-  docker login --username AWS --password-stdin \
-  637161850292.dkr.ecr.eu-west-1.amazonaws.com
-
-# Build + Push
-docker build -t crisis-intel-agent -f infrastructure/docker/Dockerfile .
-docker tag crisis-intel-agent:latest \
-  637161850292.dkr.ecr.eu-west-1.amazonaws.com/crisis-intel-agent:latest
-docker push \
-  637161850292.dkr.ecr.eu-west-1.amazonaws.com/crisis-intel-agent:latest
-```
-
-🌍 **API Live** : `http://34.248.159.126:8000/docs`
-
----
-
-## 📈 CI/CD — GitHub Actions
-
-À chaque `git push` sur `main` :
-1. ✅ Installation des dépendances
-2. ✅ Vérification du style (`black --check`)
-3. ✅ Lancement des tests (`pytest`)
-
----
-
-## 🔐 Sécurité
-
-- Clé API obligatoire dans le header `X-API-Key`
-- Secrets dans `.env` — jamais dans le code
-- `.env` exclu de Git via `.gitignore`
-- Security Group AWS — port 8000 uniquement
+`http://34.248.159.126:8000/docs`
 
 ---
 
