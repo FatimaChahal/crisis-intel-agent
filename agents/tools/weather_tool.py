@@ -1,7 +1,6 @@
 import requests
 from langchain_core.tools import tool
 
-
 CITY_COORDINATES = {
     "gironde": (44.8378, -0.5792),
     "france": (46.2276, 2.2137),

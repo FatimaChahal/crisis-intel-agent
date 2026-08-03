@@ -16,6 +16,7 @@ langfuse_handler = CallbackHandler()
 
 class WildfireState(TypedDict):
     """State shared between all agents."""
+
     question: str
     history: str
     language: str
@@ -38,7 +39,9 @@ def create_llm() -> ChatGroq:
 def classifier_agent(state: WildfireState) -> WildfireState:
     """Classify the question: relevance, language, and type."""
     llm = create_llm()
-    history_text = f"\nConversation history:\n{state['history']}" if state.get("history") else ""
+    history_text = (
+        f"\nConversation history:\n{state['history']}" if state.get("history") else ""
+    )
 
     response = llm.invoke(
         f"""You are a classifier for a wildfire analysis system.
@@ -48,7 +51,7 @@ LANGUAGE: (language name in English, e.g. French, English, Arabic, Spanish)
 TYPE: stats OR case OR recommendation OR comparison
 {history_text}
 Question: {state['question']}""",
-        config={"callbacks": [langfuse_handler]}
+        config={"callbacks": [langfuse_handler]},
     ).content.strip()
 
     lines = response.split("\n")
@@ -64,18 +67,21 @@ Question: {state['question']}""",
         elif "TYPE:" in line:
             question_type = line.split(":", 1)[1].strip().lower()
 
-    return {**state, "is_relevant": is_relevant, "language": language, "question_type": question_type}
+    return {
+        **state,
+        "is_relevant": is_relevant,
+        "language": language,
+        "question_type": question_type,
+    }
 
 
 def weather_node(state: WildfireState) -> WildfireState:
     """Fetch current weather conditions using MCP weather tool."""
     llm = create_llm()
-    location = llm.invoke(
-        f"""Extract the location (city or country) from this question.
+    location = llm.invoke(f"""Extract the location (city or country) from this question.
 Return ONLY the location name, nothing else.
 If no specific location, return 'france'.
-Question: {state['question']}"""
-    ).content.strip()
+Question: {state['question']}""").content.strip()
 
     weather = get_weather_conditions.invoke(location)
     return {**state, "weather_data": weather}
@@ -121,7 +127,7 @@ Extract and compute:
 5. Risk level summary
 
 Be precise and data-driven.""",
-        config={"callbacks": [langfuse_handler]}
+        config={"callbacks": [langfuse_handler]},
     ).content
 
     return {**state, "analysis": analysis}
@@ -172,7 +178,7 @@ Structure your answer with:
 - Current weather conditions and risk assessment (if available)
 - Recommended actions
 - Risk assessment""",
-        config={"callbacks": [langfuse_handler]}
+        config={"callbacks": [langfuse_handler]},
     ).content
 
     final_answer = f"{response}\n\n📚 **Sources :**\n{references_text}"
@@ -204,9 +210,19 @@ def needs_weather(state: WildfireState) -> str:
     """Decide if weather data is needed."""
     question_lower = state["question"].lower()
     weather_triggers = [
-        "today", "now", "current", "risk", "danger",
-        "aujourd'hui", "maintenant", "risque", "actuellement",
-        "conditions", "météo", "weather", "temperature"
+        "today",
+        "now",
+        "current",
+        "risk",
+        "danger",
+        "aujourd'hui",
+        "maintenant",
+        "risque",
+        "actuellement",
+        "conditions",
+        "météo",
+        "weather",
+        "temperature",
     ]
     if any(t in question_lower for t in weather_triggers):
         return "weather"
@@ -239,16 +255,15 @@ def build_wildfire_agent_v2():
     graph.add_node("stop", stop_node)
 
     graph.add_edge(START, "classifier")
-    graph.add_conditional_edges("classifier", route_after_classifier, {
-        "weather": "weather",
-        "retrieve": "retriever",
-        "stop": "stop"
-    })
+    graph.add_conditional_edges(
+        "classifier",
+        route_after_classifier,
+        {"weather": "weather", "retrieve": "retriever", "stop": "stop"},
+    )
     graph.add_edge("weather", "retriever")
-    graph.add_conditional_edges("retriever", route_after_retriever, {
-        "analyze": "analyst",
-        "stop": "stop"
-    })
+    graph.add_conditional_edges(
+        "retriever", route_after_retriever, {"analyze": "analyst", "stop": "stop"}
+    )
     graph.add_edge("analyst", "responder")
     graph.add_edge("responder", END)
     graph.add_edge("stop", END)
@@ -272,20 +287,22 @@ def run_agent_v2(question: str, history: list = None) -> str:
     agent = build_wildfire_agent_v2()
     start = time.time()
 
-    result = agent.invoke({
-        "question": question,
-        "history": history_text,
-        "language": "English",
-        "question_type": "case",
-        "is_relevant": False,
-        "context": [],
-        "metadata": [],
-        "analysis": "",
-        "answer": "",
-        "references": "",
-        "weather_data": "",
-        "stop_reason": ""
-    })
+    result = agent.invoke(
+        {
+            "question": question,
+            "history": history_text,
+            "language": "English",
+            "question_type": "case",
+            "is_relevant": False,
+            "context": [],
+            "metadata": [],
+            "analysis": "",
+            "answer": "",
+            "references": "",
+            "weather_data": "",
+            "stop_reason": "",
+        }
+    )
 
     latency = (time.time() - start) * 1000
     track_rag_run(
@@ -294,7 +311,7 @@ def run_agent_v2(question: str, history: list = None) -> str:
         model_name="llama-3.3-70b-versatile",
         latency_ms=latency,
         n_docs_retrieved=len(result["context"]),
-        response_length=len(result["answer"])
+        response_length=len(result["answer"]),
     )
 
     return result["answer"]

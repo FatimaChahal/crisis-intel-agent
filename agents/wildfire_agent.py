@@ -10,16 +10,39 @@ from mlflow_tracking.tracker import track_rag_run
 load_dotenv()
 
 WILDFIRE_KEYWORDS = [
-    "fire", "wildfire", "forest", "burn", "burnt", "hectare",
-    "smoke", "evacuation", "incendie", "feu", "forêt", "brûlé",
-    "flamme", "flame", "blaze", "country", "france", "spain",
-    "greece", "turkey", "portugal", "gironde", "severity",
-    "summer", "drought", "vegetation", "conifer"
+    "fire",
+    "wildfire",
+    "forest",
+    "burn",
+    "burnt",
+    "hectare",
+    "smoke",
+    "evacuation",
+    "incendie",
+    "feu",
+    "forêt",
+    "brûlé",
+    "flamme",
+    "flame",
+    "blaze",
+    "country",
+    "france",
+    "spain",
+    "greece",
+    "turkey",
+    "portugal",
+    "gironde",
+    "severity",
+    "summer",
+    "drought",
+    "vegetation",
+    "conifer",
 ]
 
 
 class WildfireState(TypedDict):
     """State of the Wildfire Agent."""
+
     question: str
     history: str
     is_relevant: bool
@@ -56,8 +79,7 @@ def guardrail(state: WildfireState) -> WildfireState:
     if state.get("history"):
         history_text = f"\nConversation history:\n{state['history']}\n"
 
-    check = llm.invoke(
-        f"""You are a content filter for a wildfire analysis system.
+    check = llm.invoke(f"""You are a content filter for a wildfire analysis system.
 Determine if the following question is related to wildfires, forest fires,
 burnt areas, fire management, or fire crisis events.
 The question can be in ANY language.
@@ -65,8 +87,7 @@ Consider the conversation history to understand the context.
 {history_text}
 Current question: {state['question']}
 
-Answer ONLY with YES or NO."""
-    ).content.strip().upper()
+Answer ONLY with YES or NO.""").content.strip().upper()
 
     is_relevant = "YES" in check
     return {**state, "is_relevant": is_relevant}
@@ -163,10 +184,16 @@ def stop(state: WildfireState) -> WildfireState:
             "Please ask a question related to wildfires, burnt areas, or fire management."
         )
     else:
-        msg = ("⚠️ I could not find sufficiently similar wildfire events in my database "
-               "for your query. Please try with different keywords (country, year, season...).")
+        msg = (
+            "⚠️ I could not find sufficiently similar wildfire events in my database "
+            "for your query. Please try with different keywords (country, year, season...)."
+        )
 
-    return {**state, "answer": msg, "stop_reason": "out_of_scope" if not state["is_relevant"] else "no_results"}
+    return {
+        **state,
+        "answer": msg,
+        "stop_reason": "out_of_scope" if not state["is_relevant"] else "no_results",
+    }
 
 
 def build_wildfire_agent():
@@ -185,10 +212,9 @@ def build_wildfire_agent():
 
     graph.add_edge(START, "guardrail_node")
     graph.add_edge("guardrail_node", "retrieve_node")
-    graph.add_conditional_edges("retrieve_node", check_stop, {
-        "answer": "generate_node",
-        "stop": "stop_node"
-    })
+    graph.add_conditional_edges(
+        "retrieve_node", check_stop, {"answer": "generate_node", "stop": "stop_node"}
+    )
     graph.add_edge("generate_node", END)
     graph.add_edge("stop_node", END)
 
@@ -222,15 +248,17 @@ def run_agent(question: str, history: list = None) -> str:
     agent = build_wildfire_agent()
     start = time.time()
 
-    result = agent.invoke({
-        "question": question,
-        "history": history_text,
-        "is_relevant": False,
-        "context": [],
-        "metadata": [],
-        "answer": "",
-        "stop_reason": ""
-    })
+    result = agent.invoke(
+        {
+            "question": question,
+            "history": history_text,
+            "is_relevant": False,
+            "context": [],
+            "metadata": [],
+            "answer": "",
+            "stop_reason": "",
+        }
+    )
 
     latency = (time.time() - start) * 1000
     track_rag_run(
@@ -239,7 +267,7 @@ def run_agent(question: str, history: list = None) -> str:
         model_name="llama-3.3-70b-versatile",
         latency_ms=latency,
         n_docs_retrieved=len(result["context"]),
-        response_length=len(result["answer"])
+        response_length=len(result["answer"]),
     )
 
     return result["answer"]

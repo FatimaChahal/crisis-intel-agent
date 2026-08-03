@@ -34,22 +34,27 @@ def build_vector_store_from_gold() -> chromadb.Collection:
     # Index in batches of 500
     batch_size = 500
     for i in range(0, len(df), batch_size):
-        batch = df.iloc[i:i + batch_size]
+        batch = df.iloc[i : i + batch_size]
         collection.add(
             ids=[str(idx) for idx in batch.index],
             documents=batch["summary"].tolist(),
-            metadatas=[{
-                "country_code": str(row["country_code"]),
-                "year": int(row["year"]),
-                "burnt_area_ha": float(row["burnt_area_ha"]),
-                "severity": str(row["severity"]),
-                "season": str(row["season"]),
-                "risk_score": float(row["risk_score"]),
-                "duration_days": int(row["duration_days"]),
-                "dominant_vegetation": str(row["dominant_vegetation"]),
-            } for _, row in batch.iterrows()]
+            metadatas=[
+                {
+                    "country_code": str(row["country_code"]),
+                    "year": int(row["year"]),
+                    "burnt_area_ha": float(row["burnt_area_ha"]),
+                    "severity": str(row["severity"]),
+                    "season": str(row["season"]),
+                    "risk_score": float(row["risk_score"]),
+                    "duration_days": int(row["duration_days"]),
+                    "dominant_vegetation": str(row["dominant_vegetation"]),
+                }
+                for _, row in batch.iterrows()
+            ],
         )
-        print(f"  ✅ Batch {i // batch_size + 1} indexed ({min(i + batch_size, len(df))}/{len(df)})")
+        print(
+            f"  ✅ Batch {i // batch_size + 1} indexed ({min(i + batch_size, len(df))}/{len(df)})"
+        )
 
     print(f"\n✅ Vector store ready: {collection.count()} documents")
     return collection
@@ -66,10 +71,7 @@ def get_vector_store() -> chromadb.Collection:
     embedding_fn = embedding_functions.SentenceTransformerEmbeddingFunction(
         model_name="all-MiniLM-L6-v2"
     )
-    return client.get_collection(
-        name="wildfires",
-        embedding_function=embedding_fn
-    )
+    return client.get_collection(name="wildfires", embedding_function=embedding_fn)
 
 
 def search_wildfires(query: str, n: int = 3) -> list:
@@ -84,10 +86,7 @@ def search_wildfires(query: str, n: int = 3) -> list:
         List of similar wildfire summaries.
     """
     collection = get_vector_store()
-    results = collection.query(
-        query_texts=[query],
-        n_results=n
-    )
+    results = collection.query(query_texts=[query], n_results=n)
     return results["documents"][0], results["metadatas"][0]
 
 

@@ -40,21 +40,25 @@ def build_eval_dataset() -> Dataset:
     contexts = []
 
     for question in questions:
-        result = agent.invoke({
-            "alerte": question,
-            "contexte": "",
-            "analyse": "",
-        })
+        result = agent.invoke(
+            {
+                "alerte": question,
+                "contexte": "",
+                "analyse": "",
+            }
+        )
         answers.append(result["analyse"])
         docs = search_similar(collection, question, n=2)
         contexts.append(docs)
 
-    return Dataset.from_dict({
-        "question": questions,
-        "answer": answers,
-        "contexts": contexts,
-        "ground_truth": ground_truths,
-    })
+    return Dataset.from_dict(
+        {
+            "question": questions,
+            "answer": answers,
+            "contexts": contexts,
+            "ground_truth": ground_truths,
+        }
+    )
 
 
 def run_evaluation() -> None:

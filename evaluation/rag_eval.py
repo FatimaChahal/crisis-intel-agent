@@ -56,15 +56,15 @@ def run_evaluation() -> None:
     test_cases = [
         {
             "question": "flood in germany severity orange",
-            "ground_truth": "Emergency evacuation, military deployment, temporary bridges built."
+            "ground_truth": "Emergency evacuation, military deployment, temporary bridges built.",
         },
         {
             "question": "earthquake in turkey severity red",
-            "ground_truth": "International rescue teams, tent cities, emergency food and water supply."
+            "ground_truth": "International rescue teams, tent cities, emergency food and water supply.",
         },
         {
             "question": "wildfire in greece severity extreme",
-            "ground_truth": "Aerial firefighting, evacuation by sea, EU civil protection mechanism activated."
+            "ground_truth": "Aerial firefighting, evacuation by sea, EU civil protection mechanism activated.",
         },
     ]
 
@@ -83,6 +83,7 @@ def run_evaluation() -> None:
         latency = (time.time() - start) * 1000
 
         from langchain_groq import ChatGroq
+
         llm = ChatGroq(model="llama-3.3-70b-versatile", temperature=0)
         prompt = f"""You are a crisis analyst. Use the context below to analyze the alert.
 

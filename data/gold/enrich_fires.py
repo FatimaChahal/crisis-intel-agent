@@ -1,8 +1,9 @@
 import pandas as pd
 
 
-def compute_risk_score(burnt_area_ha: float, duration_days: int,
-                       protected_area_pct: float) -> float:
+def compute_risk_score(
+    burnt_area_ha: float, duration_days: int, protected_area_pct: float
+) -> float:
     """
     Compute normalized risk score between 0.0 and 1.0.
 
@@ -71,7 +72,11 @@ def build_gold_modis() -> pd.DataFrame:
     # Fix Greek character encoding issues
     for col in ["province", "commune"]:
         df[col] = df[col].apply(
-            lambda x: "unknown" if any(c == "?" for c in str(x)) or str(x) == "nan" else str(x)
+            lambda x: (
+                "unknown"
+                if any(c == "?" for c in str(x)) or str(x) == "nan"
+                else str(x)
+            )
         )
 
     df["protected_area_pct"] = pd.to_numeric(
@@ -80,10 +85,9 @@ def build_gold_modis() -> pd.DataFrame:
 
     df["risk_score"] = df.apply(
         lambda r: compute_risk_score(
-            r["burnt_area_ha"],
-            r["duration_days"],
-            r["protected_area_pct"]
-        ), axis=1
+            r["burnt_area_ha"], r["duration_days"], r["protected_area_pct"]
+        ),
+        axis=1,
     )
 
     df["crisis_type"] = "wildfire"
@@ -110,7 +114,9 @@ def build_gold_modis() -> pd.DataFrame:
     df_gold.to_csv("data/gold/modis_fires_gold.csv", index=False)
 
     print(f"✅ MODIS Gold: {len(df_gold)} fires")
-    print(f"✅ Risk score: {df_gold['risk_score'].min()} → {df_gold['risk_score'].max()}")
+    print(
+        f"✅ Risk score: {df_gold['risk_score'].min()} → {df_gold['risk_score'].max()}"
+    )
     print(f"\n📄 Example summary (top fire):")
     print(df_gold.iloc[0]["summary"])
     print(f"\n📄 Example summary (fire #5):")

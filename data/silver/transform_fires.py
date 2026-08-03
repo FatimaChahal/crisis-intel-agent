@@ -1,18 +1,37 @@
 import pandas as pd
 
-
 COUNTRY_NAMES = {
-    "PRT": "Portugal", "ESP": "Spain", "FRA": "France",
-    "ITA": "Italy", "GRC": "Greece", "DZA": "Algeria",
-    "AUT": "Austria", "BGR": "Bulgaria", "HRV": "Croatia",
-    "CYP": "Cyprus", "CZE": "Czech Republic", "EST": "Estonia",
-    "FIN": "Finland", "DEU": "Germany", "HUN": "Hungary",
-    "LVA": "Latvia", "LBN": "Lebanon", "LTU": "Lithuania",
-    "MAR": "Morocco", "NLD": "Netherlands", "MKD": "North Macedonia",
-    "NOR": "Norway", "POL": "Poland", "ROU": "Romania",
-    "SRB": "Serbia", "SVK": "Slovakia", "SVN": "Slovenia",
-    "SWE": "Sweden", "CHE": "Switzerland", "TUR": "Turkey",
-    "UKR": "Ukraine"
+    "PRT": "Portugal",
+    "ESP": "Spain",
+    "FRA": "France",
+    "ITA": "Italy",
+    "GRC": "Greece",
+    "DZA": "Algeria",
+    "AUT": "Austria",
+    "BGR": "Bulgaria",
+    "HRV": "Croatia",
+    "CYP": "Cyprus",
+    "CZE": "Czech Republic",
+    "EST": "Estonia",
+    "FIN": "Finland",
+    "DEU": "Germany",
+    "HUN": "Hungary",
+    "LVA": "Latvia",
+    "LBN": "Lebanon",
+    "LTU": "Lithuania",
+    "MAR": "Morocco",
+    "NLD": "Netherlands",
+    "MKD": "North Macedonia",
+    "NOR": "Norway",
+    "POL": "Poland",
+    "ROU": "Romania",
+    "SRB": "Serbia",
+    "SVK": "Slovakia",
+    "SVN": "Slovenia",
+    "SWE": "Sweden",
+    "CHE": "Switzerland",
+    "TUR": "Turkey",
+    "UKR": "Ukraine",
 }
 
 
@@ -65,19 +84,25 @@ def build_silver() -> pd.DataFrame:
             country_name = COUNTRY_NAMES.get(code, code)
             severity = compute_severity(burnt_area, nr_fires)
 
-            records.append({
-                "year": year,
-                "country_code": code,
-                "country": country_name,
-                "burnt_area_ha": burnt_area,
-                "nr_fires": nr_fires,
-                "severity": severity,
-                "avg_fire_size_ha": round(burnt_area / nr_fires, 2) if nr_fires > 0 else 0,
-                "decade": (year // 10) * 10,
-            })
+            records.append(
+                {
+                    "year": year,
+                    "country_code": code,
+                    "country": country_name,
+                    "burnt_area_ha": burnt_area,
+                    "nr_fires": nr_fires,
+                    "severity": severity,
+                    "avg_fire_size_ha": (
+                        round(burnt_area / nr_fires, 2) if nr_fires > 0 else 0
+                    ),
+                    "decade": (year // 10) * 10,
+                }
+            )
 
     df_silver = pd.DataFrame(records)
-    df_silver = df_silver.sort_values(["year", "burnt_area_ha"], ascending=[True, False])
+    df_silver = df_silver.sort_values(
+        ["year", "burnt_area_ha"], ascending=[True, False]
+    )
     df_silver = df_silver.reset_index(drop=True)
     df_silver.to_csv("data/silver/fires_clean.csv", index=False)
 
@@ -116,23 +141,36 @@ def build_silver_modis() -> pd.DataFrame:
     df["dominant_vegetation"] = df[veg_cols].idxmax(axis=1)
 
     df["severity"] = df["AREA_HA"].apply(
-        lambda x: "EXTREME" if x >= 100000
-        else "HIGH" if x >= 20000
-        else "MEDIUM" if x >= 5000
-        else "LOW"
+        lambda x: (
+            "EXTREME"
+            if x >= 100000
+            else "HIGH" if x >= 20000 else "MEDIUM" if x >= 5000 else "LOW"
+        )
     )
 
-    df_silver = df[[
-        "COUNTRY", "PROVINCE", "COMMUNE", "year", "month", "season",
-        "AREA_HA", "duration_days", "severity",
-        "dominant_vegetation", "PERCNA2K"
-    ]].rename(columns={
-        "COUNTRY": "country_code",
-        "PROVINCE": "province",
-        "COMMUNE": "commune",
-        "AREA_HA": "burnt_area_ha",
-        "PERCNA2K": "protected_area_pct"
-    })
+    df_silver = df[
+        [
+            "COUNTRY",
+            "PROVINCE",
+            "COMMUNE",
+            "year",
+            "month",
+            "season",
+            "AREA_HA",
+            "duration_days",
+            "severity",
+            "dominant_vegetation",
+            "PERCNA2K",
+        ]
+    ].rename(
+        columns={
+            "COUNTRY": "country_code",
+            "PROVINCE": "province",
+            "COMMUNE": "commune",
+            "AREA_HA": "burnt_area_ha",
+            "PERCNA2K": "protected_area_pct",
+        }
+    )
 
     df_silver = df_silver.sort_values("burnt_area_ha", ascending=False)
     df_silver = df_silver.reset_index(drop=True)
@@ -140,7 +178,11 @@ def build_silver_modis() -> pd.DataFrame:
 
     print(f"✅ MODIS Silver: {len(df_silver)} fires")
     print(f"✅ Severity:\n{df_silver['severity'].value_counts()}")
-    print(df_silver[["country_code", "year", "burnt_area_ha", "severity", "province"]].head(5))
+    print(
+        df_silver[
+            ["country_code", "year", "burnt_area_ha", "severity", "province"]
+        ].head(5)
+    )
     return df_silver
 
 

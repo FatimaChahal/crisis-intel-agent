@@ -51,6 +51,7 @@ mlflow.set_experiment("wildfire-agent-evaluation")
 #     {"question": "What is the stock price of Apple?", "expected_topic": "off_topic"},
 # ]
 
+
 def load_test_dataset() -> tuple:
     """
     Load the professional test dataset from JSON file.
@@ -130,46 +131,54 @@ def evaluate_guardrails() -> dict:
     # Wildfire questions should NOT be blocked
     wildfire_passed = 0
     for tc in WILDFIRE_QUESTIONS:
-        result = agent.invoke({
-            "question": tc["question"],
-            "history": "",
-            "language": "English",
-            "question_type": "case",
-            "is_relevant": False,
-            "context": [],
-            "metadata": [],
-            "analysis": "",
-            "answer": "",
-            "references": "",
-            "weather_data": "",
-            "stop_reason": ""
-        })
+        result = agent.invoke(
+            {
+                "question": tc["question"],
+                "history": "",
+                "language": "English",
+                "question_type": "case",
+                "is_relevant": False,
+                "context": [],
+                "metadata": [],
+                "analysis": "",
+                "answer": "",
+                "references": "",
+                "weather_data": "",
+                "stop_reason": "",
+            }
+        )
         if result["is_relevant"]:
             wildfire_passed += 1
             correct += 1
-        print(f"  ✅ [{tc['expected_topic']}] {tc['question'][:50]}... → {'PASS' if result['is_relevant'] else 'FAIL'}")
+        print(
+            f"  ✅ [{tc['expected_topic']}] {tc['question'][:50]}... → {'PASS' if result['is_relevant'] else 'FAIL'}"
+        )
 
     # Off-topic questions should be blocked
     offtopic_blocked = 0
     for tc in OUT_OF_SCOPE_QUESTIONS:
-        result = agent.invoke({
-            "question": tc["question"],
-            "history": "",
-            "language": "English",
-            "question_type": "case",
-            "is_relevant": False,
-            "context": [],
-            "metadata": [],
-            "analysis": "",
-            "answer": "",
-            "references": "",
-            "weather_data": "",
-            "stop_reason": ""
-        })
+        result = agent.invoke(
+            {
+                "question": tc["question"],
+                "history": "",
+                "language": "English",
+                "question_type": "case",
+                "is_relevant": False,
+                "context": [],
+                "metadata": [],
+                "analysis": "",
+                "answer": "",
+                "references": "",
+                "weather_data": "",
+                "stop_reason": "",
+            }
+        )
         if not result["is_relevant"]:
             offtopic_blocked += 1
             correct += 1
-        print(f"  ❌ [{tc['expected_topic']}] {tc['question'][:50]}... → {'BLOCKED ✅' if not result['is_relevant'] else 'NOT BLOCKED ❌'}")
+        print(
+            f"  ❌ [{tc['expected_topic']}] {tc['question'][:50]}... → {'BLOCKED ✅' if not result['is_relevant'] else 'NOT BLOCKED ❌'}"
+        )
 
     precision = correct / total
     recall_wildfire = wildfire_passed / len(WILDFIRE_QUESTIONS)
@@ -182,7 +191,7 @@ def evaluate_guardrails() -> dict:
     return {
         "guardrail_precision": precision,
         "wildfire_recall": recall_wildfire,
-        "offtopic_block_rate": recall_offtopic
+        "offtopic_block_rate": recall_offtopic,
     }
 
 
@@ -213,6 +222,7 @@ def evaluate_rag() -> dict:
 
         # Generate answer
         from langchain_groq import ChatGroq
+
         llm = ChatGroq(model="llama-3.3-70b-versatile", temperature=0)
         answer = llm.invoke(
             f"You are a wildfire expert. Answer based on this context:\n{context}\n\nQuestion: {tc['question']}"
@@ -224,7 +234,9 @@ def evaluate_rag() -> dict:
         all_relevancy.append(scores["relevancy"])
 
         print(f"  📄 {tc['question'][:50]}...")
-        print(f"     Faithfulness: {scores['faithfulness']:.2f} | Relevancy: {scores['relevancy']:.2f} | Latency: {latency:.0f}ms")
+        print(
+            f"     Faithfulness: {scores['faithfulness']:.2f} | Relevancy: {scores['relevancy']:.2f} | Latency: {latency:.0f}ms"
+        )
 
     avg_faith = sum(all_faithfulness) / len(all_faithfulness) if all_faithfulness else 0
     avg_rel = sum(all_relevancy) / len(all_relevancy) if all_relevancy else 0
@@ -237,7 +249,7 @@ def evaluate_rag() -> dict:
     return {
         "avg_faithfulness": avg_faith,
         "avg_relevancy": avg_rel,
-        "avg_latency_ms": avg_latency
+        "avg_latency_ms": avg_latency,
     }
 
 
@@ -270,9 +282,13 @@ def run_full_evaluation() -> None:
         print("\n" + "=" * 60)
         print("✅ EVALUATION SUMMARY")
         print("=" * 60)
-        print(f"  Guardrail Precision  : {guardrail_metrics['guardrail_precision']:.2f}")
+        print(
+            f"  Guardrail Precision  : {guardrail_metrics['guardrail_precision']:.2f}"
+        )
         print(f"  Wildfire Recall      : {guardrail_metrics['wildfire_recall']:.2f}")
-        print(f"  Off-topic Block Rate : {guardrail_metrics['offtopic_block_rate']:.2f}")
+        print(
+            f"  Off-topic Block Rate : {guardrail_metrics['offtopic_block_rate']:.2f}"
+        )
         print(f"  Avg Faithfulness     : {rag_metrics['avg_faithfulness']:.2f}")
         print(f"  Avg Relevancy        : {rag_metrics['avg_relevancy']:.2f}")
         print(f"  Avg Latency (ms)     : {rag_metrics['avg_latency_ms']:.0f}")
