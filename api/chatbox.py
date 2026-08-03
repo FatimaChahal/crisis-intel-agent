@@ -1,12 +1,45 @@
-# import gradio as gr
-# from agents.wildfire_agent import run_agent
+import requests
 import gradio as gr
-from agents.wildfire_agent_v2 import run_agent_v2
+
+API_URL = "http://localhost:8000"
+API_KEY = "crisis-intel-secret-key-2026"
+
+
+def call_api(question: str, history: list) -> str:
+    """
+    Call the FastAPI /analyze endpoint.
+
+    Args:
+        question: User question in any language.
+        history: Chat history list.
+
+    Returns:
+        Agent answer string.
+    """
+    try:
+        response = requests.post(
+            f"{API_URL}/analyze",
+            json={"question": question, "history": history},
+            headers={"X-API-Key": API_KEY},
+            timeout=60,
+        )
+        if response.status_code == 200:
+            return response.json()["answer"]
+        elif response.status_code == 401:
+            return "❌ Authentication error — invalid API key."
+        else:
+            return f"❌ API error {response.status_code}: {response.text}"
+    except requests.exceptions.ConnectionError:
+        return "❌ Cannot connect to API — make sure FastAPI is running on port 8000."
+    except requests.exceptions.Timeout:
+        return "⏱️ Request timeout — the agent is taking too long to respond."
+    except Exception as e:
+        return f"❌ Unexpected error: {str(e)}"
 
 
 def chat(message: str, history: list) -> str:
     """
-    Process user message and return agent v2 response.
+    Process user message via FastAPI and return agent response.
 
     Args:
         message: User input message.
@@ -17,23 +50,23 @@ def chat(message: str, history: list) -> str:
     """
     if not message.strip():
         return "Please ask a question about wildfires."
-    return run_agent_v2(message, history)
+    return call_api(message, history)
 
 
 def launch_chatbox() -> None:
-    """Launch the Gradio chatbox interface."""
+    """Launch the Gradio chatbox interface connected to FastAPI."""
     demo = gr.ChatInterface(
         fn=chat,
         title="🔥 Crisis Intel Agent — Wildfire Assistant",
         description=(
             "Ask me anything about wildfire events in Europe (2016-2026). "
-            "I answer in your language with data sources. "
+            "I answer in your language with data sources and real-time weather. "
             "Powered by 18,607 real wildfire records from Copernicus EFFIS & MODIS."
         ),
         examples=[
             ["What were the largest wildfires in France?"],
             ["Quels incendies ont touché la Grèce en 2023 ?"],
-            ["Which country had the most severe wildfires in 2022?"],
+            ["Y a-t-il un risque d'incendie aujourd'hui en Gironde ?"],
             ["ما هي أكبر حرائق الغابات في أوروبا؟"],
         ],
     )

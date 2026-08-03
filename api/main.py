@@ -1,10 +1,12 @@
 import os
+from agents.wildfire_agent_v2 import run_agent_v2
 from fastapi import FastAPI, HTTPException, Security
 from fastapi.security import APIKeyHeader
 from dotenv import load_dotenv
 
 from data.silver.clean import clean_alert
 from data.silver.models import Alert
+from pydantic import BaseModel
 
 load_dotenv()
 
@@ -61,3 +63,36 @@ def ingest(alert: dict, api_key: str = Security(verify_api_key)) -> Alert:
         A validated and cleaned Alert object.
     """
     return clean_alert(alert)
+
+
+class AnalyzeRequest(BaseModel):
+    """Request model for wildfire analysis."""
+
+    question: str
+    history: list = []
+
+
+class AnalyzeResponse(BaseModel):
+    """Response model for wildfire analysis."""
+
+    answer: str
+    question: str
+    status: str
+
+
+@app.post("/analyze")
+def analyze(
+    request: AnalyzeRequest, api_key: str = Security(verify_api_key)
+) -> AnalyzeResponse:
+    """
+    Analyze a wildfire-related question using the 4-agent LangGraph pipeline.
+
+    Args:
+        request: Question and optional chat history.
+        api_key: Validated API key.
+
+    Returns:
+        Structured analysis response with answer and status.
+    """
+    answer = run_agent_v2(request.question, request.history)
+    return AnalyzeResponse(answer=answer, question=request.question, status="success")
