@@ -2,3 +2,5 @@
 venv/
 awscliv2.zip
 aws/
+data/bronze/modis.ba.poly.*
+data/gold/chroma_db/
