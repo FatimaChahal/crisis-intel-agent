@@ -70,6 +70,8 @@ def get_weather_conditions(location: str) -> str:
             risk_score += 1
         if humidity < 20:
             risk_score += 3
+        elif humidity < 30:
+            risk_score += 2
         elif humidity < 40:
             risk_score += 1
         if wind > 40:
