@@ -143,11 +143,11 @@ Après (pro)     :  Gradio → POST /analyze → FastAPI → Agent
 
 **Endpoints disponibles :**
 
-| Endpoint | Méthode | Description |
+| Endpoint | Méthode | Rôle |
 |---|---|---|
-| `/health` | GET | Statut de l'API |
-| `/ingest` | POST | Ingestion d'une alerte |
-| `/analyze` | POST | Analyse complète via 4 agents |
+| `/health` | GET | Vérifie que le serveur tourne — monitoring AWS |
+| `/ingest` | POST | Reçoit une alerte brute et la nettoie (Bronze → Silver) |
+| `/analyze` | POST | Question → 4 agents LangGraph → réponse avec sources [1][2][3] |
 
 ---
 
@@ -247,7 +247,7 @@ python3 -m agents.adk.wildfire_adk_agent
 
 ## ☁️ Déploiement AWS
 
-🌍 **API Live** : `http://34.248.159.126:8000/docs`
+🌍 **API Live** : `http://3.254.6.145:8000/docs`
 
 ---
 
