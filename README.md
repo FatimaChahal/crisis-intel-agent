@@ -151,6 +151,24 @@ Après (pro)     :  Gradio → POST /analyze → FastAPI → Agent
 
 ---
 
+## 📸 Captures d'écran
+
+### Chatbox multilingue — réponses avec sources [1][2][3]
+![Chatbox France](docs/images/chatbox_france_1.png)
+![Chatbox Gironde Risk](docs/images/chatbox_gironde_risk_1.png)
+
+### Guardrail — refus hors sujet
+![Guardrail](docs/images/chatbox_guardrail.png)
+
+### FastAPI — endpoints sur AWS
+![FastAPI Swagger](docs/images/fastapi_swagger.png)
+
+### Évaluation RAG — 45 questions | LLM-as-judge
+![Evaluation Metrics](docs/images/eval_metrics.png)
+
+### MLflow — tracking des expériences
+![MLflow Dashboard](docs/images/mlflow_dashboard.png)
+
 ## 📐 Évaluation RAG — 45 questions professionnelles
 
 | Métrique | Score | Seuil pro | Status |
