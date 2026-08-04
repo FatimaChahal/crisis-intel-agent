@@ -19,6 +19,10 @@
                 {
                     "name": "API_KEY",
                     "value": "crisis-intel-secret-key-2026"
+                },
+                {
+                    "name": "GROQ_API_KEY",
+                    "value": "remplace-par-ta-vraie-cle"
                 }
             ],
             "logConfiguration": {
