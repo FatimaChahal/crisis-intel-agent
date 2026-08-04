@@ -155,7 +155,9 @@ Après (pro)     :  Gradio → POST /analyze → FastAPI → Agent
 
 ### Chatbox multilingue — réponses avec sources [1][2][3]
 ![Chatbox France](docs/images/chatbox_france_1.png)
+![Chatbox France](docs/images/chatbox_france_2.png)
 ![Chatbox Gironde Risk](docs/images/chatbox_gironde_risk_1.png)
+![Chatbox Gironde Risk](docs/images/chatbox_gironde_risk_2.png)
 
 ### Guardrail — refus hors sujet
 ![Guardrail](docs/images/chatbox_guardrail.png)
