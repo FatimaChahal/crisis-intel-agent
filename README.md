@@ -151,24 +151,53 @@ Après (pro)     :  Gradio → POST /analyze → FastAPI → Agent
 
 ---
 
-## 📸 Captures d'écran
+## 📸 Démonstration visuelle
 
-### Chatbox multilingue — réponses avec sources [1][2][3]
-![Chatbox France](docs/images/chatbox_france_1.png)
-![Chatbox France](docs/images/chatbox_france_2.png)
-![Chatbox Gironde Risk](docs/images/chatbox_gironde_risk_1.png)
-![Chatbox Gironde Risk](docs/images/chatbox_gironde_risk_2.png)
+### 🏗️ Architecture des agents
+![Architecture](docs/images/agent_arch.png)
 
-### Guardrail — refus hors sujet
+---
+
+### 💬 Chatbox multilingue — réponses avec sources [1][2][3]
+
+**Question en anglais — incendies en France :**
+![Chatbox France 1](docs/images/chatbox_france_1.png)
+
+**Réponse détaillée avec citations :**
+![Chatbox France 2](docs/images/chatbox_france_2.png)
+
+---
+
+### 🌡️ MCP Météo — risque temps réel en Gironde
+
+**Résultat 1 :**
+![Gironde Risk 1](docs/images/chatbox_gironde_risk_1.png)
+
+**Résultat 2 :**
+![Gironde Risk 2](docs/images/chatbox_gironde_risk_2.png)
+
+---
+
+### 🛡️ Guardrail — refus poli hors sujet
 ![Guardrail](docs/images/chatbox_guardrail.png)
 
-### FastAPI — endpoints sur AWS
+---
+
+### 🔌 FastAPI — 3 endpoints live sur AWS (`3.254.6.145:8000`)
+> `GET /health` · `POST /ingest` · `POST /analyze`
+
 ![FastAPI Swagger](docs/images/fastapi_swagger.png)
 
-### Évaluation RAG — 45 questions | LLM-as-judge
+---
+
+### 📊 Évaluation RAG — 45 questions | LLM-as-judge
+> Faithfulness **0.96** · Relevancy **0.83** · Guardrail Precision **0.90** · Wildfire Recall **1.00**
+
 ![Evaluation Metrics](docs/images/eval_metrics.png)
 
-### MLflow — tracking des expériences
+---
+
+### 📈 MLflow — tracking des expériences et métriques
 ![MLflow Dashboard](docs/images/mlflow_dashboard.png)
 
 ## 📐 Évaluation RAG — 45 questions professionnelles
